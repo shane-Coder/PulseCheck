@@ -80,3 +80,8 @@ Designed to deploy on a free/cheap tier first (Fly.io, Railway, Render) via the 
 Dockerfiles, then move to a self-managed Kubernetes cluster later without code changes —
 `docker-compose.yml` mirrors the four services (`web`, `worker`, `beat`, `db`/`redis`) that
 would become K8s Deployments.
+
+## Notes
+
+Built and maintained by [Shivam](https://github.com/shane-Coder), with Claude Code used as a
+development tool for scaffolding and debugging.
