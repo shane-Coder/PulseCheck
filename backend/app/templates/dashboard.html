@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · PulseCheck{% endblock %}
+{% block content %}
+<div class="header-row">
+  <h1>Your monitors</h1>
+</div>
+
+<div class="card">
+  <h2>New monitor</h2>
+  <form method="post" action="/monitors" class="inline-form">
+    <label>Name
+      <input type="text" name="name" placeholder="nightly-backup" required>
+    </label>
+    <label>Expected every (seconds)
+      <input type="number" name="period_seconds" value="86400" min="60" required>
+    </label>
+    <label>Grace period (seconds)
+      <input type="number" name="grace_seconds" value="3600" min="0" required>
+    </label>
+    <button type="submit">Create monitor</button>
+  </form>
+</div>
+
+{% if monitors %}
+<table class="monitor-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Status</th>
+      <th>Last ping</th>
+      <th>Every</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in monitors %}
+    <tr>
+      <td><a href="/monitors/{{ m.id }}">{{ m.name }}</a></td>
+      <td><span class="badge status-{{ m.status.value }}">{{ m.status.value }}</span></td>
+      <td>{{ m.last_ping_at.strftime("%Y-%m-%d %H:%M UTC") if m.last_ping_at else "never" }}</td>
+      <td>{{ m.period_seconds }}s (+{{ m.grace_seconds }}s grace)</td>
+      <td>
+        <form method="post" action="/monitors/{{ m.id }}/pause" style="display:inline">
+          <button class="link-button" type="submit">{{ "resume" if m.status.value == "paused" else "pause" }}</button>
+        </form>
+        <form method="post" action="/monitors/{{ m.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this monitor?');">
+          <button class="link-button danger" type="submit">delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No monitors yet — create one above to get a ping URL.</p>
+{% endif %}
+{% endblock %}

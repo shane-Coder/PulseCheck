@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ monitor.name }} · PulseCheck{% endblock %}
+{% block content %}
+<p><a href="/">&larr; back to dashboard</a></p>
+<div class="header-row">
+  <h1>{{ monitor.name }}</h1>
+  <span class="badge status-{{ monitor.status.value }}">{{ monitor.status.value }}</span>
+</div>
+
+<div class="card">
+  <h2>Ping URL</h2>
+  <p class="muted">Have your job hit this URL (GET or POST) every time it completes successfully:</p>
+  <code class="ping-url">{{ request.base_url }}ping/{{ monitor.ping_token }}</code>
+  <p class="muted">Example cron entry:</p>
+  <pre>* * * * * /path/to/script.sh && curl -fsS {{ request.base_url }}ping/{{ monitor.ping_token }}</pre>
+</div>
+
+<div class="card">
+  <h2>Schedule</h2>
+  <p>Expected every <strong>{{ monitor.period_seconds }}s</strong>, with a grace period of <strong>{{ monitor.grace_seconds }}s</strong>.</p>
+  <p>Last ping: {{ monitor.last_ping_at.strftime("%Y-%m-%d %H:%M UTC") if monitor.last_ping_at else "never" }}</p>
+</div>
+
+<div class="card">
+  <h2>Recent pings</h2>
+  {% if recent_pings %}
+  <ul class="ping-list">
+    {% for p in recent_pings %}
+    <li>{{ p.received_at.strftime("%Y-%m-%d %H:%M:%S UTC") }} {% if p.source_ip %}<span class="muted">from {{ p.source_ip }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">No pings received yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
