@@ -166,3 +166,87 @@ pre {
 
 .ping-list { list-style: none; padding: 0; margin: 0; }
 .ping-list li { padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
+
+.card h3 {
+  font-size: 0.95rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.card h3:first-of-type { margin-top: 0; }
+
+.card code {
+  background: #0f1115;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+}
+
+.card pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+}
+
+.compare-table th, .compare-table td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.compare-table th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.intro-panel {
+  margin-bottom: 1.5rem;
+}
+
+.intro-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.25rem 0;
+}
+
+.intro-panel[open] summary {
+  margin-bottom: 1rem;
+}
+
+.intro-panel h3 {
+  font-size: 0.95rem;
+  margin: 1.25rem 0 0.4rem;
+}
+
+.intro-panel h3:first-of-type { margin-top: 0; }
+
+.auth-intro {
+  max-width: 380px;
+  margin: 3rem auto 0;
+  text-align: center;
+}
+
+.auth-intro h2 {
+  font-size: 1.15rem;
+  margin-bottom: 0.4rem;
+}
+
+.auth-intro ul {
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 1rem 0 0;
+  padding-left: 1.2rem;
+}

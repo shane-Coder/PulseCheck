@@ -5,6 +5,24 @@
   <h1>Your monitors</h1>
 </div>
 
+<details class="card intro-panel" id="intro-panel" open>
+  <summary>What is PulseCheck, and how do I use it?</summary>
+
+  <h3>What it does</h3>
+  <p class="muted">PulseCheck is a "dead man's switch" for scheduled jobs. Your cron job, backup script, or scheduled task pings a unique URL every time it finishes successfully. If a ping doesn't arrive within the expected window, we assume it silently failed and email you — before you find out the hard way, days later, that backups stopped running.</p>
+
+  <h3>How to use it</h3>
+  <p class="muted">Create a monitor above, copy its ping URL from the monitor's detail page, and add one line to the end of your job: <code>curl -fsS &lt;ping-url&gt;</code>. That's the entire integration.</p>
+
+  <h3>Why you'd want this</h3>
+  <p class="muted">Most monitoring (Prometheus, UptimeRobot, etc.) watches things that are already running. Nothing watches for a cron job that never started, or a script that crashed before finishing — that's the gap PulseCheck fills.</p>
+
+  <h3>How it's different from other tools</h3>
+  <p class="muted">Same core idea as Healthchecks.io or Cronitor, but self-hostable and fully open — read every line of what happens to your ping. It doesn't replace Prometheus/Grafana, it complements them: they watch live services, PulseCheck watches jobs that only run occasionally.</p>
+
+  <p><a href="/docs">Full docs, integration examples (cron, Docker, Kubernetes, CI, systemd), and roadmap →</a></p>
+</details>
+
 <div class="card">
   <h2>New monitor</h2>
   <form method="post" action="/monitors" class="inline-form">
@@ -54,4 +72,17 @@
 {% else %}
 <p class="muted">No monitors yet — create one above to get a ping URL.</p>
 {% endif %}
+
+<script>
+  (function () {
+    var panel = document.getElementById("intro-panel");
+    if (!panel) return;
+    if (localStorage.getItem("pulsecheck_intro_dismissed") === "1") {
+      panel.removeAttribute("open");
+    }
+    panel.addEventListener("toggle", function () {
+      localStorage.setItem("pulsecheck_intro_dismissed", panel.open ? "0" : "1");
+    });
+  })();
+</script>
 {% endblock %}

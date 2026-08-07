@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -6,6 +7,18 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg2://pulsecheck:pulsecheck@db:5432/pulsecheck"
     redis_url: str = "redis://redis:6379/0"
+
+    @field_validator("database_url")
+    @classmethod
+    def _normalize_database_url(cls, v: str) -> str:
+        # Managed Postgres providers (Fly, Railway, Render, Heroku-style) hand out
+        # "postgres://..." or plain "postgresql://..." — SQLAlchemy needs the
+        # psycopg2 dialect prefix to pick the right driver.
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+psycopg2://", 1)
+        if v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+psycopg2://", 1)
+        return v
 
     jwt_secret: str = "change-me"
     jwt_algorithm: str = "HS256"

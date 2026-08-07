@@ -1,0 +1,41 @@
+# fly.toml app configuration file generated for pulsecheck-shivam on 2026-08-06T23:23:40+05:30
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'pulsecheck-shivam'
+primary_region = 'sin'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[processes]
+  web = 'uvicorn app.main:app --host 0.0.0.0 --port 8000'
+  worker = 'celery -A app.celery_app.celery_app worker --loglevel=info --concurrency=2'
+  beat = 'celery -A app.celery_app.celery_app beat --loglevel=info'
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['web']
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
+  processes = ['web']
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
+  processes = ['worker']
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1
+  processes = ['beat']

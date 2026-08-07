@@ -6,14 +6,19 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.database import Base, engine
-from app.routers import auth, monitors, ping
+from app.routers import auth, monitors, pages, ping
 
-app = FastAPI(title="PulseCheck")
+# docs_url/redoc_url disabled: FastAPI's built-in interactive API docs default
+# to "/docs" too, which silently wins the route over our own docs page since
+# it's registered before app.include_router() runs. We don't expose a public
+# API surface here, so there's nothing worth keeping Swagger UI around for.
+app = FastAPI(title="PulseCheck", docs_url=None, redoc_url=None)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(auth.router)
 app.include_router(monitors.router)
+app.include_router(pages.router)
 app.include_router(ping.router)
 
 

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Docs · PulseCheck{% endblock %}
+{% block content %}
+<h1>Docs</h1>
+<p class="muted">Everything you need to wire PulseCheck into your jobs, and where it fits next to the monitoring stack you probably already run.</p>
+
+<div class="card">
+  <h2>What PulseCheck is</h2>
+  <p>PulseCheck is a <strong>dead man's switch</strong> for scheduled jobs. You give it a URL; your job pings that URL every time it finishes successfully. If a ping doesn't arrive within the expected window, PulseCheck assumes the job silently failed — didn't run, crashed before finishing, or the machine it lives on died — and emails you.</p>
+  <p class="muted">It watches for the <em>absence</em> of a signal. That's a different job from almost everything else in a typical monitoring stack, which watches for the <em>presence</em> of bad signals (errors, high latency, low disk).</p>
+</div>
+
+<div class="card">
+  <h2>Quick start</h2>
+  <ol>
+    <li>Log in and create a monitor — give it a name and how often the job is expected to run.</li>
+    <li>Copy the ping URL it generates.</li>
+    <li>Add one line to your job so it hits that URL <em>only when the job succeeds</em>.</li>
+  </ol>
+  <p class="muted">That's the whole integration surface. No agent to install, no library to import — just an HTTP request.</p>
+</div>
+
+<div class="card">
+  <h2>Integration examples</h2>
+
+  <h3>Cron (bash)</h3>
+  <pre>* * * * * /path/to/backup.sh &amp;&amp; curl -fsS https://pulsecheck-shivam.fly.dev/ping/&lt;token&gt;</pre>
+  <p class="muted">The <code>&amp;&amp;</code> matters — the ping only fires if <code>backup.sh</code> exits 0.</p>
+
+  <h3>Docker container / entrypoint wrapper</h3>
+  <pre>#!/bin/sh
+set -e
+/app/run-nightly-job.sh
+curl -fsS https://pulsecheck-shivam.fly.dev/ping/&lt;token&gt;</pre>
+
+  <h3>Kubernetes CronJob</h3>
+  <pre>spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: job
+              image: your-image
+              command:
+                - sh
+                - -c
+                - "/app/run.sh && curl -fsS https://pulsecheck-shivam.fly.dev/ping/&lt;token&gt;"
+          restartPolicy: Never</pre>
+
+  <h3>GitHub Actions</h3>
+  <pre>- name: Run scheduled task
+  run: ./scripts/nightly.sh
+
+- name: Report success to PulseCheck
+  if: success()
+  run: curl -fsS https://pulsecheck-shivam.fly.dev/ping/&lt;token&gt;</pre>
+
+  <h3>systemd timer</h3>
+  <pre>[Service]
+ExecStart=/usr/local/bin/run-job.sh
+ExecStartPost=/usr/bin/curl -fsS https://pulsecheck-shivam.fly.dev/ping/&lt;token&gt;</pre>
+
+  <h3>Airflow DAG</h3>
+  <pre>def notify_pulsecheck(context):
+    import requests
+    requests.get("https://pulsecheck-shivam.fly.dev/ping/&lt;token&gt;", timeout=5)
+
+task = PythonOperator(
+    task_id="nightly_job",
+    python_callable=run_job,
+    on_success_callback=notify_pulsecheck,
+)</pre>
+</div>
+
+<div class="card">
+  <h2>How this fits next to Prometheus + Grafana</h2>
+  <p>If you're already running Prometheus and Grafana, PulseCheck isn't a replacement — it's covering a blind spot those tools have by design.</p>
+  <table class="compare-table">
+    <thead>
+      <tr><th></th><th>Prometheus + Grafana</th><th>PulseCheck</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Model</td><td>Pull — scrapes metrics from running services</td><td>Push — your job reports in when it finishes</td></tr>
+      <tr><td>Best for</td><td>Long-running services: request rate, latency, error rate, resource usage</td><td>One-shot / scheduled jobs: cron, backups, batch scripts, CI jobs</td></tr>
+      <tr><td>Fails to catch</td><td>A cron job that never starts — there's no running process to scrape</td><td>Gradual performance decay in a live service — that's what Prometheus is for</td></tr>
+      <tr><td>Setup</td><td>Exporter + scrape config + alert rules</td><td>One curl call at the end of your job</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">Planned: a Prometheus-compatible <code>/metrics</code> endpoint so your monitors' up/down state shows up on a Grafana dashboard alongside everything else — see Roadmap below.</p>
+</div>
+
+<div class="card">
+  <h2>How this differs from other tools</h2>
+  <table class="compare-table">
+    <thead>
+      <tr><th>Tool</th><th>Checks</th><th>Difference</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>UptimeRobot / Better Uptime</td><td>"Is this URL reachable right now?"</td><td>Pings <em>outward</em> at your service on a timer. Useless for a cron job with no HTTP endpoint.</td></tr>
+      <tr><td>Prometheus + Alertmanager</td><td>"Are these live metrics within bounds?"</td><td>Built for continuously running services, not one-shot jobs.</td></tr>
+      <tr><td>Healthchecks.io / Cronitor</td><td>Same dead man's switch concept</td><td>PulseCheck is the same idea, self-hostable, and open — you can read every line of what happens to your ping.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>FAQ</h2>
+  <p><strong>What if my job fails partway through?</strong><br>
+  If the ping is the last line of your script, a failure earlier means no ping is sent, and PulseCheck alerts you when the window passes — exactly the case you care about.</p>
+  <p><strong>What if my job legitimately takes longer some days?</strong><br>
+  Set the grace period generously. It's the buffer added on top of the expected interval before an alert fires.</p>
+  <p><strong>Do I need to install anything on my server?</strong><br>
+  No. A ping is one HTTP request — <code>curl</code>, <code>wget</code>, or any HTTP client works.</p>
+</div>
+
+<div class="card">
+  <h2>Roadmap</h2>
+  <ul>
+    <li>Slack and generic webhook alerts, alongside email</li>
+    <li>Prometheus-compatible <code>/metrics</code> endpoint</li>
+    <li>"Start" and "fail" ping variants, to detect partial runs, not just missed ones</li>
+    <li>Public status pages</li>
+    <li>Team accounts and an API for programmatic monitor management</li>
+  </ul>
+</div>
+{% endblock %}

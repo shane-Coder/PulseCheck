@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Sign up · PulseCheck{% endblock %}
 {% block content %}
+<div class="auth-intro">
+  <h2>Never let a cron job fail silently</h2>
+  <p class="muted">Your job pings PulseCheck when it finishes. Miss a check-in, and we email you — before you find out the hard way.</p>
+  <ul>
+    <li>No agent to install — one <code>curl</code> call at the end of your script</li>
+    <li>Works with cron, Docker, Kubernetes CronJobs, CI pipelines, systemd timers</li>
+    <li>Free to start — see the <a href="/docs">docs</a> for setup examples</li>
+  </ul>
+</div>
 <div class="card narrow">
   <h1>Create your account</h1>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}

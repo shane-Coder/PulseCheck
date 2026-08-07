@@ -11,6 +11,7 @@
     <a class="brand" href="/">PulseCheck</a>
     {% if user %}
       <nav>
+        <a href="/docs">Docs</a>
         <span class="muted">{{ user.email }}</span>
         <form method="post" action="/logout" style="display:inline">
           <button class="link-button" type="submit">Log out</button>
@@ -18,6 +19,7 @@
       </nav>
     {% else %}
       <nav>
+        <a href="/docs">Docs</a>
         <a href="/login">Log in</a>
         <a href="/register">Sign up</a>
       </nav>
