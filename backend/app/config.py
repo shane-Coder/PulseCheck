@@ -36,5 +36,14 @@ class Settings(BaseSettings):
 
     overdue_check_interval_seconds: int = 60
 
+    # Comma-separated list of emails that get admin access (/admin). No DB
+    # role table for this — it's a single-owner tool right now, and an env
+    # var is simpler than a migration + role-management UI for one person.
+    admin_emails: str = ""
+
+    @property
+    def admin_emails_set(self) -> set[str]:
+        return {e.strip().lower() for e in self.admin_emails.split(",") if e.strip()}
+
 
 settings = Settings()

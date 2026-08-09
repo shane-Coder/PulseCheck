@@ -1,6 +1,7 @@
 from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.models import User
 from app.security import decode_access_token
@@ -21,6 +22,12 @@ def get_current_user(
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
+    return user
+
+
+def get_current_admin_user(user: User = Depends(get_current_user)) -> User:
+    if user.email.lower() not in settings.admin_emails_set:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return user
 
 

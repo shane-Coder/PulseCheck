@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Admin · PulseCheck{% endblock %}
+{% block content %}
+<div class="header-row">
+  <h1>Admin</h1>
+</div>
+<p class="muted">{{ rows|length }} account{{ "s" if rows|length != 1 else "" }} total.</p>
+
+<table class="monitor-table">
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Signed up</th>
+      <th>Monitors</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u, monitor_count in rows %}
+    <tr>
+      <td>
+        {{ u.email }}
+        {% if is_admin_email(u.email) %}<span class="badge status-up">admin</span>{% endif %}
+      </td>
+      <td>{{ u.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</td>
+      <td>{{ monitor_count }}</td>
+      <td>
+        {% if not is_admin_email(u.email) %}
+        <form method="post" action="/admin/users/{{ u.id }}/delete" style="display:inline" onsubmit="return confirm('Delete account ' + {{ u.email|tojson }} + ' and all its monitors? This can\'t be undone.');">
+          <button class="link-button danger" type="submit">delete</button>
+        </form>
+        {% else %}
+        <span class="muted">—</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -119,6 +119,13 @@ button {
 
 .muted { color: var(--muted); font-size: 0.9rem; }
 .error { color: var(--down); }
+.success { color: var(--up); }
+
+.danger-card { border-color: rgba(255,92,92,0.35); }
+
+button.danger {
+  background: var(--down);
+}
 
 .monitor-table {
   width: 100%;

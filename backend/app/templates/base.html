@@ -12,6 +12,8 @@
     {% if user %}
       <nav>
         <a href="/docs">Docs</a>
+        <a href="/account">Account</a>
+        {% if is_admin_email(user.email) %}<a href="/admin">Admin</a>{% endif %}
         <span class="muted">{{ user.email }}</span>
         <form method="post" action="/logout" style="display:inline">
           <button class="link-button" type="submit">Log out</button>

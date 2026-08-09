@@ -6,7 +6,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.database import Base, engine
-from app.routers import auth, monitors, pages, ping
+from app.routers import account, admin, auth, monitors, pages, ping
 
 # docs_url/redoc_url disabled: FastAPI's built-in interactive API docs default
 # to "/docs" too, which silently wins the route over our own docs page since
@@ -16,6 +16,8 @@ app = FastAPI(title="PulseCheck", docs_url=None, redoc_url=None)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+app.include_router(account.router)
+app.include_router(admin.router)
 app.include_router(auth.router)
 app.include_router(monitors.router)
 app.include_router(pages.router)
