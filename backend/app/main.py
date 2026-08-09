@@ -2,10 +2,12 @@ from fastapi import FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import HTTPException
 from fastapi.requests import Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi.errors import RateLimitExceeded
 
 from app.database import Base, engine
+from app.rate_limit import limiter
 from app.routers import account, admin, auth, monitors, pages, ping
 
 # docs_url/redoc_url disabled: FastAPI's built-in interactive API docs default
@@ -13,6 +15,8 @@ from app.routers import account, admin, auth, monitors, pages, ping
 # it's registered before app.include_router() runs. We don't expose a public
 # API surface here, so there's nothing worth keeping Swagger UI around for.
 app = FastAPI(title="PulseCheck", docs_url=None, redoc_url=None)
+
+app.state.limiter = limiter
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
@@ -36,6 +40,14 @@ async def auth_redirect_handler(request: Request, exc: HTTPException):
     if exc.status_code == 401 and "text/html" in request.headers.get("accept", ""):
         return RedirectResponse(url="/login")
     return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return PlainTextResponse(
+        "Too many attempts — please wait a bit and try again.",
+        status_code=429,
+    )
 
 
 @app.get("/healthz")

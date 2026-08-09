@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User
+from app.rate_limit import limiter
 from app.security import create_access_token, hash_password, verify_password
 from app.templating import templates
 
@@ -18,6 +19,7 @@ def register_form(request: Request):
 
 
 @router.post("/register")
+@limiter.limit("5/hour")
 def register(
     request: Request,
     email: str = Form(...),
@@ -54,6 +56,7 @@ def login_form(request: Request):
 
 
 @router.post("/login")
+@limiter.limit("10/minute")
 def login(
     request: Request,
     email: str = Form(...),
