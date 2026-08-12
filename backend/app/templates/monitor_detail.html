@@ -5,6 +5,7 @@
 <div class="header-row">
   <h1>{{ monitor.name }}</h1>
   <span class="badge status-{{ monitor.status.value }}">{{ monitor.status.value }}</span>
+  <a href="/monitors/{{ monitor.id }}/edit" class="link-button">edit</a>
 </div>
 
 <div class="card">

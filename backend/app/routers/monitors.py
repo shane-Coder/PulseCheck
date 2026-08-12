@@ -83,6 +83,50 @@ def monitor_detail(
     )
 
 
+@router.get("/monitors/{monitor_id}/edit")
+def edit_monitor_form(
+    monitor_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    monitor = (
+        db.query(Monitor)
+        .filter(Monitor.id == monitor_id, Monitor.owner_id == user.id)
+        .first()
+    )
+    if monitor is None:
+        raise HTTPException(status_code=404, detail="Monitor not found")
+
+    return templates.TemplateResponse(
+        "monitor_edit.html", {"request": request, "user": user, "monitor": monitor}
+    )
+
+
+@router.post("/monitors/{monitor_id}/edit")
+def edit_monitor(
+    monitor_id: int,
+    name: str = Form(...),
+    period_seconds: int = Form(...),
+    grace_seconds: int = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    monitor = (
+        db.query(Monitor)
+        .filter(Monitor.id == monitor_id, Monitor.owner_id == user.id)
+        .first()
+    )
+    if monitor is None:
+        raise HTTPException(status_code=404, detail="Monitor not found")
+
+    monitor.name = name
+    monitor.period_seconds = max(period_seconds, 60)
+    monitor.grace_seconds = max(grace_seconds, 0)
+    db.commit()
+    return RedirectResponse(url=f"/monitors/{monitor_id}", status_code=status.HTTP_302_FOUND)
+
+
 @router.post("/monitors/{monitor_id}/pause")
 def pause_monitor(
     monitor_id: int,

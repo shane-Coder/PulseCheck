@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ monitor.name }} · PulseCheck{% endblock %}
+{% block content %}
+<p><a href="/monitors/{{ monitor.id }}">&larr; back to {{ monitor.name }}</a></p>
+
+<div class="card">
+  <h2>Edit monitor</h2>
+  <p class="muted">Changing the schedule takes effect immediately — if your job checks in less often than the new interval, it may show as overdue right away.</p>
+  <form method="post" action="/monitors/{{ monitor.id }}/edit" class="inline-form">
+    <label>Name
+      <input type="text" name="name" value="{{ monitor.name }}" required>
+    </label>
+    <label>Expected every (seconds)
+      <input type="number" name="period_seconds" value="{{ monitor.period_seconds }}" min="60" required>
+    </label>
+    <label>Grace period (seconds)
+      <input type="number" name="grace_seconds" value="{{ monitor.grace_seconds }}" min="0" required>
+    </label>
+    <button type="submit">Save changes</button>
+  </form>
+</div>
+{% endblock %}
