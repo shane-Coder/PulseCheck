@@ -4,8 +4,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user, get_current_user_optional
-from app.models import Monitor, MonitorStatus, User
+from app.models import Monitor, MonitorStatus, StatusEvent, User, utcnow
 from app.templating import templates
+from app.timeline import build_uptime_timeline
 
 router = APIRouter(tags=["monitors"])
 
@@ -47,6 +48,8 @@ def create_monitor(
         grace_seconds=max(grace_seconds, 0),
     )
     db.add(monitor)
+    db.flush()  # populate monitor.id / created_at before the timeline's first event
+    db.add(StatusEvent(monitor_id=monitor.id, status=MonitorStatus.NEW, changed_at=monitor.created_at))
     db.commit()
     return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
@@ -67,9 +70,16 @@ def monitor_detail(
         raise HTTPException(status_code=404, detail="Monitor not found")
 
     recent_pings = sorted(monitor.pings, key=lambda p: p.received_at, reverse=True)[:20]
+    timeline = build_uptime_timeline(monitor)
     return templates.TemplateResponse(
         "monitor_detail.html",
-        {"request": request, "user": user, "monitor": monitor, "recent_pings": recent_pings},
+        {
+            "request": request,
+            "user": user,
+            "monitor": monitor,
+            "recent_pings": recent_pings,
+            "timeline": timeline,
+        },
     )
 
 
@@ -87,9 +97,9 @@ def pause_monitor(
     if monitor is None:
         raise HTTPException(status_code=404, detail="Monitor not found")
 
-    monitor.status = (
-        MonitorStatus.PAUSED if monitor.status != MonitorStatus.PAUSED else MonitorStatus.NEW
-    )
+    new_status = MonitorStatus.PAUSED if monitor.status != MonitorStatus.PAUSED else MonitorStatus.NEW
+    monitor.status = new_status
+    db.add(StatusEvent(monitor_id=monitor.id, status=new_status, changed_at=utcnow()))
     db.commit()
     return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 

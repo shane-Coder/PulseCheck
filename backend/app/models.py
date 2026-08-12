@@ -50,6 +50,9 @@ class Monitor(Base):
 
     owner: Mapped["User"] = relationship(back_populates="monitors")
     pings: Mapped[list["PingEvent"]] = relationship(back_populates="monitor", cascade="all, delete-orphan")
+    status_events: Mapped[list["StatusEvent"]] = relationship(
+        back_populates="monitor", cascade="all, delete-orphan", order_by="StatusEvent.changed_at"
+    )
 
     @property
     def deadline(self) -> datetime | None:
@@ -68,3 +71,18 @@ class PingEvent(Base):
     source_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     monitor: Mapped["Monitor"] = relationship(back_populates="pings")
+
+
+class StatusEvent(Base):
+    """One row per status *transition* (not per ping) — this is what lets the
+    monitor detail page draw an up/down timeline and compute real uptime %,
+    instead of only ever knowing the current status."""
+
+    __tablename__ = "status_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    monitor_id: Mapped[int] = mapped_column(ForeignKey("monitors.id"), nullable=False)
+    status: Mapped[MonitorStatus] = mapped_column(Enum(MonitorStatus), nullable=False)
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    monitor: Mapped["Monitor"] = relationship(back_populates="status_events")

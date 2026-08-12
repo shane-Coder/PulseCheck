@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Monitor, MonitorStatus, PingEvent
+from app.models import Monitor, MonitorStatus, PingEvent, StatusEvent
 
 router = APIRouter(tags=["ping"])
 
@@ -19,9 +19,14 @@ def ping(ping_token: str, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Unknown ping token")
 
     now = datetime.now(timezone.utc)
+    was_up = monitor.status == MonitorStatus.UP
+
     monitor.last_ping_at = now
     monitor.status = MonitorStatus.UP
     monitor.alert_sent = False
+
+    if not was_up:
+        db.add(StatusEvent(monitor_id=monitor.id, status=MonitorStatus.UP, changed_at=now))
 
     event = PingEvent(
         monitor_id=monitor.id,

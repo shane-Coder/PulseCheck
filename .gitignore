@@ -11,3 +11,10 @@ build/
 .DS_Store
 node_modules/
 postgres-data/
+
+# Stray debugging artifacts from ad-hoc curl testing at repo root
+/*cookies*.txt
+/dash_*.html
+/m[0-9]*.html
+/detail*.html
+/landing_check.html

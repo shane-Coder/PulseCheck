@@ -22,6 +22,27 @@
 </div>
 
 <div class="card">
+  <div class="header-row">
+    <h2>Uptime</h2>
+    <span class="uptime-pct">{{ timeline.uptime_pct }}%</span>
+  </div>
+  <p class="muted">Since {{ timeline.window_start.strftime("%Y-%m-%d") }} ({{ (timeline.window_end - timeline.window_start).days }} day window)</p>
+  <div class="timeline-bar">
+    {% for seg in timeline.segments %}
+    <div class="timeline-segment status-fill-{{ seg.status }}"
+         style="width: {{ seg.width_pct }}%"
+         title="{{ seg.status }}: {{ seg.start.strftime('%Y-%m-%d %H:%M') }} → {{ seg.end.strftime('%Y-%m-%d %H:%M') }} UTC"></div>
+    {% endfor %}
+  </div>
+  <div class="timeline-legend">
+    <span><i class="legend-dot status-fill-up"></i> up</span>
+    <span><i class="legend-dot status-fill-down"></i> down</span>
+    <span><i class="legend-dot status-fill-new"></i> new / no data</span>
+    <span><i class="legend-dot status-fill-paused"></i> paused</span>
+  </div>
+</div>
+
+<div class="card">
   <h2>Recent pings</h2>
   {% if recent_pings %}
   <ul class="ping-list">

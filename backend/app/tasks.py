@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from app.celery_app import celery_app
 from app.database import SessionLocal
 from app.email_utils import send_email
-from app.models import Monitor, MonitorStatus
+from app.models import Monitor, MonitorStatus, StatusEvent
 
 
 @celery_app.task(name="app.tasks.check_overdue_monitors")
@@ -34,6 +34,7 @@ def check_overdue_monitors() -> int:
 
             if deadline is not None and now > deadline:
                 monitor.status = MonitorStatus.DOWN
+                db.add(StatusEvent(monitor_id=monitor.id, status=MonitorStatus.DOWN, changed_at=now))
                 flipped += 1
                 if not monitor.alert_sent:
                     send_alert_email(monitor.owner.email, monitor.name)

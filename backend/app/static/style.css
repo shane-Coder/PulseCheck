@@ -178,6 +178,45 @@ button.secondary {
   color: var(--text);
 }
 
+.uptime-pct {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.timeline-bar {
+  display: flex;
+  height: 28px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin: 0.75rem 0;
+}
+
+.timeline-segment {
+  height: 100%;
+  min-width: 2px;
+}
+
+.status-fill-up { background: var(--up); }
+.status-fill-down { background: var(--down); }
+.status-fill-new { background: var(--new); }
+.status-fill-paused { background: var(--paused); }
+
+.timeline-legend {
+  display: flex;
+  gap: 1.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+}
+
 .monitor-table {
   width: 100%;
   border-collapse: collapse;
