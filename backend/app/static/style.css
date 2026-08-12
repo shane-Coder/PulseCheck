@@ -127,6 +127,57 @@ button.danger {
   background: var(--down);
 }
 
+.hero {
+  text-align: center;
+  padding: 2.5rem 0 1.5rem;
+}
+
+.hero h1 {
+  font-size: 2rem;
+  line-height: 1.25;
+  margin: 0 0 1rem;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-sub {
+  color: var(--muted);
+  font-size: 1.05rem;
+  max-width: 520px;
+  margin: 0 auto 1.75rem;
+}
+
+.cta-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.cta-row button {
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+}
+
+button.secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.steps {
+  padding-left: 1.2rem;
+}
+
+.steps li {
+  margin-bottom: 0.75rem;
+  color: var(--muted);
+}
+
+.steps li strong {
+  color: var(--text);
+}
+
 .monitor-table {
   width: 100%;
   border-collapse: collapse;

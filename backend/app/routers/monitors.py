@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, get_current_user_optional
 from app.models import Monitor, MonitorStatus, User
 from app.templating import templates
 
@@ -11,11 +11,16 @@ router = APIRouter(tags=["monitors"])
 
 
 @router.get("/")
-def dashboard(
+def home(
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User | None = Depends(get_current_user_optional),
 ):
+    # Logged out: this is the front door — show what PulseCheck is before
+    # asking anyone to sign in. Logged in: show the actual dashboard.
+    if user is None:
+        return templates.TemplateResponse("landing.html", {"request": request, "user": None})
+
     monitors = (
         db.query(Monitor)
         .filter(Monitor.owner_id == user.id)

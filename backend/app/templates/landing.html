@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}PulseCheck — know when a scheduled job stops working{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <h1>Know the moment a scheduled job stops working — not days later</h1>
+  <p class="hero-sub">PulseCheck watches your cron jobs, backups, and scheduled scripts, and emails you the second one goes quiet.</p>
+  <div class="cta-row">
+    <a href="/register"><button>Get started free</button></a>
+    <a href="/login"><button class="secondary">Log in</button></a>
+  </div>
+</section>
+
+<div class="card">
+  <h2>In plain English</h2>
+  <p>Think of PulseCheck like a heartbeat monitor — but for your automated tasks instead of a person. Every time your script or backup job finishes, it sends a tiny "I'm alive" signal. If that signal doesn't show up when it's supposed to, PulseCheck taps you on the shoulder and says "hey, something didn't run — go check."</p>
+  <p class="muted">That's the whole idea. No agents to install, nothing complicated — just one small check added to a job you already have.</p>
+</div>
+
+<div class="card">
+  <h2>How it works</h2>
+  <ol class="steps">
+    <li><strong>Create a monitor.</strong> You get a unique link, and tell PulseCheck how often the job is supposed to run.</li>
+    <li><strong>Your job visits that link when it finishes.</strong> One line added to a script, cron job, or workflow you already have.</li>
+    <li><strong>If the visit doesn't happen on time, you get an email.</strong> Before it turns into a real problem, not after.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <h2>What this actually looks like</h2>
+  <p class="muted">A real dashboard, showing real jobs:</p>
+  <table class="monitor-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Last ping</th>
+        <th>Every</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>nightly-db-backup</td>
+        <td><span class="badge status-up">up</span></td>
+        <td>2026-08-09 17:35 UTC</td>
+        <td>24h (+1h grace)</td>
+      </tr>
+      <tr>
+        <td>weekly-report-email</td>
+        <td><span class="badge status-down">down</span></td>
+        <td>2026-08-02 09:00 UTC</td>
+        <td>7d (+2h grace)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Who this is for</h2>
+  <p class="muted">Anyone who has a script, job, or task that's supposed to run on its own — and would rather find out immediately than accidentally, days later:</p>
+  <ul>
+    <li>A nightly database backup that quietly stopped running</li>
+    <li>A weekly report email that never went out</li>
+    <li>A Kubernetes CronJob or CI pipeline step that silently failed</li>
+    <li>Any script on a server that only you would notice was broken — eventually</li>
+  </ul>
+</div>
+
+<p class="muted" style="text-align:center; margin: 2rem 0;">
+  Want the technical details — cron, Docker, Kubernetes, CI examples, how this fits next to Prometheus/Grafana?
+  <a href="/docs">Read the docs →</a>
+</p>
+
+{% endblock %}

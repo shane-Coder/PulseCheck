@@ -8,19 +8,19 @@
 <details class="card intro-panel" id="intro-panel" open>
   <summary>What is PulseCheck, and how do I use it?</summary>
 
-  <h3>What it does</h3>
-  <p class="muted">PulseCheck is a "dead man's switch" for scheduled jobs. Your cron job, backup script, or scheduled task pings a unique URL every time it finishes successfully. If a ping doesn't arrive within the expected window, we assume it silently failed and email you — before you find out the hard way, days later, that backups stopped running.</p>
+  <h3>In plain English</h3>
+  <p class="muted">Think of it like a heartbeat monitor — but for your automated tasks instead of a person. Every time your script or backup job finishes, it sends a tiny "I'm alive" signal. If that signal doesn't show up when it's supposed to, PulseCheck taps you on the shoulder and says "hey, something didn't run."</p>
 
   <h3>How to use it</h3>
-  <p class="muted">Create a monitor above, copy its ping URL from the monitor's detail page, and add one line to the end of your job: <code>curl -fsS &lt;ping-url&gt;</code>. That's the entire integration.</p>
+  <p class="muted">Create a monitor above, copy its link from the monitor's detail page, and add one line to the end of your job: <code>curl -fsS &lt;your-link&gt;</code>. That's the entire setup.</p>
 
   <h3>Why you'd want this</h3>
-  <p class="muted">Most monitoring (Prometheus, UptimeRobot, etc.) watches things that are already running. Nothing watches for a cron job that never started, or a script that crashed before finishing — that's the gap PulseCheck fills.</p>
+  <p class="muted">Most monitoring tools watch things that are already running. Nothing watches for a job that never started, or a script that crashed before finishing — that's the gap PulseCheck fills.</p>
 
   <h3>How it's different from other tools</h3>
-  <p class="muted">Same core idea as Healthchecks.io or Cronitor, but self-hostable and fully open — read every line of what happens to your ping. It doesn't replace Prometheus/Grafana, it complements them: they watch live services, PulseCheck watches jobs that only run occasionally.</p>
+  <p class="muted">Same core idea as Healthchecks.io or Cronitor (both bigger, paid platforms) — self-hostable and fully open here, so you can read every line of what happens to your data. It doesn't replace Prometheus/Grafana, it complements them: they watch live services, PulseCheck watches jobs that only run occasionally.</p>
 
-  <p><a href="/docs">Full docs, integration examples (cron, Docker, Kubernetes, CI, systemd), and roadmap →</a></p>
+  <p><a href="/docs">Full technical docs, integration examples (cron, Docker, Kubernetes, CI, systemd), and roadmap →</a></p>
 </details>
 
 <div class="card">
