@@ -87,7 +87,20 @@ task = PythonOperator(
       <tr><td>Setup</td><td>Exporter + scrape config + alert rules</td><td>One curl call at the end of your job</td></tr>
     </tbody>
   </table>
-  <p class="muted">Planned: a Prometheus-compatible <code>/metrics</code> endpoint so your monitors' up/down state shows up on a Grafana dashboard alongside everything else — see Roadmap below.</p>
+  <p class="muted">There's a Prometheus-compatible <code>/metrics</code> endpoint, scoped to your account with a token — find your URL and an example scrape config on your <a href="/account">account settings</a> page.</p>
+</div>
+
+<div class="card">
+  <h2>Prometheus / Grafana metrics</h2>
+  <p>Every account has its own scrape endpoint at <code>/metrics/&lt;your-token&gt;</code> (grab the exact URL from <a href="/account">account settings</a> — it's scoped to you, so treat it as a secret). It exposes:</p>
+  <ul>
+    <li><code>pulsecheck_monitor_up</code> — 1 or 0, per monitor</li>
+    <li><code>pulsecheck_monitor_last_ping_timestamp_seconds</code> — unix timestamp of the last ping</li>
+    <li><code>pulsecheck_monitor_seconds_since_last_ping</code> — how long it's been quiet</li>
+    <li><code>pulsecheck_monitor_period_seconds</code> — the expected interval, for context</li>
+    <li><code>pulsecheck_monitors_total{status="..."}</code> — counts by status</li>
+  </ul>
+  <p class="muted">Point an existing Prometheus at it and the monitors show up on a Grafana dashboard next to everything else you already watch — no separate tool to check.</p>
 </div>
 
 <div class="card">
@@ -118,7 +131,6 @@ task = PythonOperator(
   <h2>Roadmap</h2>
   <ul>
     <li>Slack and generic webhook alerts, alongside email</li>
-    <li>Prometheus-compatible <code>/metrics</code> endpoint</li>
     <li>"Start" and "fail" ping variants, to detect partial runs, not just missed ones</li>
     <li>Public status pages</li>
     <li>Team accounts and an API for programmatic monitor management</li>

@@ -36,6 +36,13 @@ class User(Base):
     # Reset to 0 on any login or ping, so becoming active again cancels it.
     inactivity_reminder_stage: Mapped[int] = mapped_column(Integer, default=0)
 
+    # Bearer secret for /metrics/{token} — same pattern as Monitor.ping_token.
+    # Metrics are scoped per-user rather than a single public endpoint, since
+    # a public dump would leak every user's job names across the instance.
+    metrics_token: Mapped[str] = mapped_column(
+        String(36), unique=True, index=True, default=lambda: str(uuid.uuid4())
+    )
+
     monitors: Mapped[list["Monitor"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
 
 

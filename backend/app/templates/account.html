@@ -18,6 +18,19 @@
   </form>
 </div>
 
+<div class="card">
+  <h2>Prometheus / Grafana</h2>
+  <p class="muted">Scrape this URL to get your monitors' up/down state, last-ping time, and expected interval as Prometheus metrics — good for pinning them on an existing Grafana dashboard alongside everything else you already watch. It's scoped to your account only, so treat the URL as a secret, same as a ping URL.</p>
+  <code class="ping-url">{{ request.base_url }}metrics/{{ user.metrics_token }}</code>
+  <p class="muted">Example <code>prometheus.yml</code> scrape config:</p>
+  <pre>scrape_configs:
+  - job_name: pulsecheck
+    metrics_path: /metrics/{{ user.metrics_token }}
+    static_configs:
+      - targets: ["{{ request.base_url.hostname }}"]
+    scheme: https</pre>
+</div>
+
 <div class="card danger-card">
   <h2>Delete account</h2>
   <p class="muted">This permanently deletes your account and every monitor and ping history under it. There's no undo.</p>
