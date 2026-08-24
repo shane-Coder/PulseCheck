@@ -25,6 +25,12 @@ def ping(ping_token: str, request: Request, db: Session = Depends(get_db)):
     monitor.status = MonitorStatus.UP
     monitor.alert_sent = False
 
+    # A monitor actively receiving pings proves the account is in real use,
+    # even if the owner never opens the dashboard — cancel any inactivity
+    # reminder in progress.
+    if monitor.owner.inactivity_reminder_stage != 0:
+        monitor.owner.inactivity_reminder_stage = 0
+
     if not was_up:
         db.add(StatusEvent(monitor_id=monitor.id, status=MonitorStatus.UP, changed_at=now))
 

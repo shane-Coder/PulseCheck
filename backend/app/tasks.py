@@ -1,9 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.celery_app import celery_app
+from app.config import settings
 from app.database import SessionLocal
 from app.email_utils import send_email
-from app.models import Monitor, MonitorStatus, StatusEvent
+from app.models import Monitor, MonitorStatus, StatusEvent, User
 
 
 @celery_app.task(name="app.tasks.check_overdue_monitors")
@@ -24,8 +25,6 @@ def check_overdue_monitors() -> int:
         for monitor in candidates:
             if monitor.last_ping_at is None:
                 # Never pinged — only alert once it's had a full period+grace to check in.
-                deadline = monitor.created_at
-                from datetime import timedelta
                 deadline = monitor.created_at + timedelta(
                     seconds=monitor.period_seconds + monitor.grace_seconds
                 )
@@ -45,6 +44,92 @@ def check_overdue_monitors() -> int:
         db.close()
 
     return flipped
+
+
+@celery_app.task(name="app.tasks.check_inactive_accounts")
+def check_inactive_accounts() -> dict:
+    """Runs once a day. An account is 'active' if it's been logged into OR
+    any of its monitors has received a ping recently — a monitor quietly
+    doing its job for months without the owner opening the dashboard is the
+    intended use case, not inactivity, so logins alone would be the wrong
+    signal here. Admin accounts are never touched.
+
+    0 reminders sent -> 60d inactive: first reminder
+    1 reminder sent  -> 75d inactive: second/final reminder
+    2 reminders sent -> 90d inactive: account deleted (with a courtesy email
+                         sent just before, to the still-valid address)
+
+    Any login or ping resets the stage to 0, so becoming active again cancels
+    a reminder in progress. Returns counts, mainly for logging."""
+    db = SessionLocal()
+    counts = {"first_reminder": 0, "second_reminder": 0, "deleted": 0}
+    try:
+        now = datetime.now(timezone.utc)
+        users = db.query(User).all()
+
+        for user in users:
+            if user.email.lower() in settings.admin_emails_set:
+                continue
+
+            last_activity = user.last_login_at or user.created_at
+            for monitor in user.monitors:
+                if monitor.last_ping_at and monitor.last_ping_at > last_activity:
+                    last_activity = monitor.last_ping_at
+
+            days_inactive = (now - last_activity).days
+
+            if days_inactive >= settings.inactivity_delete_days and user.inactivity_reminder_stage >= 2:
+                send_email(
+                    to=user.email,
+                    subject="[PulseCheck] Your account has been deleted due to inactivity",
+                    body=(
+                        f"Your PulseCheck account has had no activity for over "
+                        f"{settings.inactivity_delete_days} days (no logins, and no monitors "
+                        "receiving pings), so it's been deleted along with its monitors and "
+                        "history, as you were told to expect in two earlier reminder emails.\n\n"
+                        "If this was a mistake, you're welcome to sign up again any time."
+                    ),
+                )
+                db.delete(user)
+                counts["deleted"] += 1
+            elif (
+                days_inactive >= settings.inactivity_second_reminder_days
+                and user.inactivity_reminder_stage == 1
+            ):
+                remaining = settings.inactivity_delete_days - days_inactive
+                send_email(
+                    to=user.email,
+                    subject="[PulseCheck] Final notice: your account will be deleted soon",
+                    body=(
+                        f"Your PulseCheck account has had no activity for {days_inactive} days. "
+                        f"If nothing changes, it'll be deleted in about {max(remaining, 1)} days, "
+                        "along with its monitors and history.\n\n"
+                        "Log in or let one of your monitors receive a ping to cancel this."
+                    ),
+                )
+                user.inactivity_reminder_stage = 2
+                counts["second_reminder"] += 1
+            elif days_inactive >= settings.inactivity_reminder_days and user.inactivity_reminder_stage == 0:
+                send_email(
+                    to=user.email,
+                    subject="[PulseCheck] Still using this account?",
+                    body=(
+                        f"Your PulseCheck account has had no activity for {days_inactive} days — "
+                        "no logins, and no monitors receiving pings.\n\n"
+                        "No action needed if you're still using it elsewhere or just haven't "
+                        "needed to check in. If it stays quiet, we'll send one more reminder "
+                        f"before deleting it after {settings.inactivity_delete_days} days total "
+                        "of inactivity."
+                    ),
+                )
+                user.inactivity_reminder_stage = 1
+                counts["first_reminder"] += 1
+
+        db.commit()
+    finally:
+        db.close()
+
+    return counts
 
 
 def send_alert_email(to_email: str, monitor_name: str) -> None:

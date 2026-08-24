@@ -15,6 +15,10 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.check_overdue_monitors",
         "schedule": schedule(run_every=settings.overdue_check_interval_seconds),
     },
+    "check-inactive-accounts": {
+        "task": "app.tasks.check_inactive_accounts",
+        "schedule": schedule(run_every=settings.inactivity_check_interval_seconds),
+    },
 }
 
 celery_app.conf.timezone = "UTC"

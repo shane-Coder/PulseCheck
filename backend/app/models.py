@@ -27,6 +27,15 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
+    # Stamped on register/login. Combined with each monitor's last_ping_at to
+    # decide real inactivity — a monitor quietly doing its job for months
+    # without the owner ever opening the dashboard is the *intended* use
+    # case, not inactivity, so logins alone would be the wrong signal.
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # 0 = no reminder sent, 1 = first reminder sent, 2 = second/final sent.
+    # Reset to 0 on any login or ping, so becoming active again cancels it.
+    inactivity_reminder_stage: Mapped[int] = mapped_column(Integer, default=0)
+
     monitors: Mapped[list["Monitor"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
 
 

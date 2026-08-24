@@ -45,5 +45,14 @@ class Settings(BaseSettings):
     def admin_emails_set(self) -> set[str]:
         return {e.strip().lower() for e in self.admin_emails.split(",") if e.strip()}
 
+    # Inactivity cleanup: reminder at N days of no activity, a second
+    # reminder later, then deletion if it's still quiet after that.
+    # "Activity" = login OR any of the user's monitors receiving a ping —
+    # see User.last_login_at for why pings count too.
+    inactivity_reminder_days: int = 60
+    inactivity_second_reminder_days: int = 75
+    inactivity_delete_days: int = 90
+    inactivity_check_interval_seconds: int = 86400  # once a day is plenty
+
 
 settings = Settings()

@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User
+from app.models import User, utcnow
 from app.rate_limit import limiter
 from app.security import create_access_token, hash_password, verify_password
 from app.templating import templates
@@ -40,7 +40,7 @@ def register(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    user = User(email=email, hashed_password=hash_password(password))
+    user = User(email=email, hashed_password=hash_password(password), last_login_at=utcnow())
     db.add(user)
     db.commit()
 
@@ -70,6 +70,10 @@ def login(
             {"request": request, "error": "Invalid email or password."},
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
+
+    user.last_login_at = utcnow()
+    user.inactivity_reminder_stage = 0
+    db.commit()
 
     token = create_access_token(subject=user.email)
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
