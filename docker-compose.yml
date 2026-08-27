@@ -53,20 +53,10 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/app:/app/app
-    command: celery -A app.celery_app.celery_app worker --loglevel=info
-
-  beat:
-    build: ./backend
-    restart: unless-stopped
-    env_file: .env
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/app:/app/app
-    command: celery -A app.celery_app.celery_app beat --loglevel=info
+    # --beat embeds the scheduler in this same process instead of a separate
+    # beat container — safe only with exactly one worker instance, which is
+    # all we run.
+    command: celery -A app.celery_app.celery_app worker --beat --loglevel=info
 
 volumes:
   postgres-data:

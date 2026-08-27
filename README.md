@@ -2,24 +2,42 @@
 
 A dead-man's-switch monitoring service for cron jobs, scheduled scripts, and background tasks.
 
-Your scheduled job pings a unique URL every time it runs. If a ping doesn't show up within
-the expected window, PulseCheck alerts you by email (Slack/webhooks coming later).
+Your scheduled job pings a unique URL every time it finishes successfully. If a ping doesn't
+show up within the expected window, PulseCheck assumes something broke and emails you —
+before you find out the hard way, days later.
+
+Live: **https://pulsecheck-shivam.fly.dev**
 
 ## Why
 
-Cron jobs and scheduled scripts fail silently all the time — a backup script errors out, a
-disk fills up, a container never restarts. PulseCheck watches for the *absence* of a signal,
-not the presence of an error, which is what makes it useful for jobs you can't otherwise
-instrument.
+Most monitoring (Prometheus, UptimeRobot, etc.) watches things that are already running.
+Nothing watches for a cron job that never started, or a script that crashed before finishing —
+that's the gap this fills. PulseCheck watches for the *absence* of a signal, not the presence
+of an error.
+
+## Features
+
+- Ping-based monitoring: one `curl` call at the end of any job (cron, Docker, Kubernetes
+  CronJob, CI step, systemd timer — anything that can make an HTTP request)
+- Per-monitor expected interval + grace period, email alerts via SMTP
+- Uptime timeline and uptime % per monitor, computed from real status-transition history
+- Prometheus-compatible `/metrics` endpoint, scoped per account with a token, for pinning
+  monitors onto an existing Grafana dashboard
+- Admin panel (env-var-gated) to see and manage accounts
+- Self-service account settings: change password, delete your own account
+- Rate-limited login/register, inactivity reminders + auto-delete for abandoned accounts
+- Public landing page + docs — no login wall on the marketing/explanation pages
 
 ## Stack
 
 - **API/backend:** FastAPI
 - **DB:** PostgreSQL (SQLAlchemy ORM)
-- **Scheduler/queue:** Celery + Redis (Celery beat runs the "who's overdue" sweep)
-- **Frontend:** server-rendered Jinja2 templates (no separate JS build for v1)
+- **Scheduler/queue:** Celery + Redis (beat runs the "who's overdue" sweep and the daily
+  inactivity check — embedded in the worker process via `celery worker --beat`, since this
+  runs as a single worker instance)
+- **Frontend:** server-rendered Jinja2 templates (no separate JS build)
 - **Auth:** email + password, JWT stored in an HttpOnly cookie
-- **Alerts:** SMTP email (v1); Slack/webhook planned for v2
+- **Alerts:** SMTP email (Slack/webhooks planned)
 
 ## Local development
 
@@ -41,45 +59,62 @@ Point a cron job at it, e.g.:
 * * * * * /path/to/your/script.sh && curl -fsS http://localhost:8000/ping/<token>
 ```
 
-If a ping doesn't arrive within `period + grace` seconds, Celery beat marks the monitor
-"down" and an alert email goes out.
+If a ping doesn't arrive within `period + grace` seconds, the scheduler marks the monitor
+"down" and an alert email goes out. See `/docs` on a running instance for integration
+examples (Docker, Kubernetes, GitHub Actions, systemd, Airflow) and how this fits next to
+Prometheus/Grafana.
+
+`.env.example` has every setting, including `ADMIN_EMAILS` (comma-separated emails that get
+`/admin` access) and the inactivity-cleanup thresholds. Without real SMTP credentials, emails
+are logged instead of sent — fine for local dev, but you'll want a real provider (Brevo,
+SendGrid, etc.) for anything beyond that.
 
 ## Project layout
 
 ```
 backend/
   app/
-    main.py           FastAPI app + route registration
-    config.py          Settings via env vars
-    database.py         SQLAlchemy engine/session
-    models.py            User, Monitor, PingEvent
-    schemas.py            Pydantic request/response models
-    security.py            Password hashing + JWT
-    deps.py                  Auth dependency (current_user from cookie)
-    celery_app.py             Celery app + beat schedule
-    tasks.py                   check_overdue_monitors, send_alert_email
-    email_utils.py               SMTP sending helper
+    main.py              FastAPI app + route registration
+    config.py             Settings via env vars
+    database.py            SQLAlchemy engine/session
+    templating.py            Shared Jinja2 environment + template globals
+    models.py                  User, Monitor, PingEvent, StatusEvent
+    security.py                  Password hashing + JWT
+    deps.py                        Auth dependencies (current user, admin gate)
+    rate_limit.py                   Redis-backed rate limiting (slowapi)
+    timeline.py                      Uptime-timeline computation from StatusEvent history
+    celery_app.py                     Celery app + beat schedule
+    tasks.py                            Overdue sweep, inactivity reminders/deletion
+    email_utils.py                       SMTP sending helper
     routers/
-      auth.py                     register/login/logout
-      monitors.py                  CRUD + dashboard views
-      ping.py                       the actual ping-receiving endpoint
-    templates/                      Jinja2 HTML
-    static/                          CSS
+      auth.py                              register/login/logout
+      account.py                            change password, delete account, metrics URL
+      admin.py                              account list + delete (env-gated)
+      monitors.py                           dashboard, monitor CRUD + edit, uptime timeline
+      ping.py                                the actual ping-receiving endpoint
+      metrics.py                            per-account Prometheus scrape endpoint
+      pages.py                              /docs
+    templates/                              Jinja2 HTML (landing, dashboard, docs, admin, ...)
+    static/                                  CSS
 ```
 
 ## Roadmap
 
-- [x] v1: single-user monitors, email alerts, dashboard
-- [ ] v2: Slack/webhook alerts, uptime % history, "start/fail" ping variants
-- [ ] v3: Stripe billing, plan limits (free tier vs paid), team accounts
-- [ ] v4: public status pages, API for programmatic monitor management
+- [x] v1: monitors, email alerts, dashboard
+- [x] v2: uptime % history, Prometheus metrics, admin panel, account self-service
+- [ ] v3: Slack/generic webhook alerts, "start"/"fail" ping variants
+- [ ] v4: Stripe billing + plan limits, team accounts, public status pages, an API
 
 ## Deployment
 
-Designed to deploy on a free/cheap tier first (Fly.io, Railway, Render) via the included
-Dockerfiles, then move to a self-managed Kubernetes cluster later without code changes —
-`docker-compose.yml` mirrors the four services (`web`, `worker`, `beat`, `db`/`redis`) that
-would become K8s Deployments.
+Deployed on Fly.io (`fly.toml` in `backend/`) — one always-on worker (with beat embedded),
+one auto-stop-when-idle web process, a small Postgres cluster, and Upstash Redis. Nothing
+Fly-specific in the code itself; `docker-compose.yml` maps directly onto whatever
+Docker-based host you'd rather use (Railway, Render, your own box).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 ## Notes
 
