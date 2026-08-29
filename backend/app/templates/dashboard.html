@@ -25,15 +25,22 @@
 
 <div class="card">
   <h2>New monitor</h2>
-  <form method="post" action="/monitors" class="inline-form">
+  <p class="muted">Not sure what to set? Start from a use case:</p>
+  <div class="template-row">
+    <button type="button" class="template-btn" data-name="nightly-backup" data-period="86400" data-grace="3600">Nightly backup</button>
+    <button type="button" class="template-btn" data-name="weekly-report" data-period="604800" data-grace="7200">Weekly report</button>
+    <button type="button" class="template-btn" data-name="hourly-sync" data-period="3600" data-grace="600">Hourly sync job</button>
+    <button type="button" class="template-btn" data-name="service-health" data-period="300" data-grace="60">Service health check</button>
+  </div>
+  <form method="post" action="/monitors" class="inline-form" id="new-monitor-form">
     <label>Name
-      <input type="text" name="name" placeholder="nightly-backup" required>
+      <input type="text" name="name" id="monitor-name" placeholder="nightly-backup" required>
     </label>
     <label>Expected every (seconds)
-      <input type="number" name="period_seconds" value="86400" min="60" required>
+      <input type="number" name="period_seconds" id="monitor-period" value="86400" min="60" required>
     </label>
     <label>Grace period (seconds)
-      <input type="number" name="grace_seconds" value="3600" min="0" required>
+      <input type="number" name="grace_seconds" id="monitor-grace" value="3600" min="0" required>
     </label>
     <button type="submit">Create monitor</button>
   </form>
@@ -82,6 +89,20 @@
     }
     panel.addEventListener("toggle", function () {
       localStorage.setItem("pulsecheck_intro_dismissed", panel.open ? "0" : "1");
+    });
+  })();
+
+  (function () {
+    var nameField = document.getElementById("monitor-name");
+    var periodField = document.getElementById("monitor-period");
+    var graceField = document.getElementById("monitor-grace");
+    document.querySelectorAll(".template-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        nameField.value = btn.dataset.name;
+        periodField.value = btn.dataset.period;
+        graceField.value = btn.dataset.grace;
+        nameField.focus();
+      });
     });
   })();
 </script>

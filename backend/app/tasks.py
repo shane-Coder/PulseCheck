@@ -9,41 +9,55 @@ from app.models import Monitor, MonitorStatus, StatusEvent, User
 
 @celery_app.task(name="app.tasks.check_overdue_monitors")
 def check_overdue_monitors() -> int:
-    """Runs on a fixed interval (see celery_app.py beat schedule). Finds monitors
-    whose deadline (last_ping_at + period + grace) has passed and are not already
-    marked down, flips them to DOWN, and fires an alert email. Returns the count
-    flipped, mainly useful for tests/logging."""
+    """Runs on a fixed interval (see celery_app.py beat schedule). Three-tier
+    check, matching Healthchecks.io's model rather than a plain up/down:
+
+    - past period, still inside grace  -> LATE (early warning, no alert)
+    - past period + grace              -> DOWN (alert fires)
+
+    Only fires the alert email on the transition into DOWN, not into LATE —
+    LATE is a heads-up you see on the dashboard, not something worth waking
+    anyone up for. Returns the count of monitors that changed state, mainly
+    for tests/logging."""
     db = SessionLocal()
-    flipped = 0
+    changed = 0
     try:
         now = datetime.now(timezone.utc)
         candidates = (
             db.query(Monitor)
-            .filter(Monitor.status.in_([MonitorStatus.UP, MonitorStatus.NEW]))
+            .filter(Monitor.status.in_([MonitorStatus.UP, MonitorStatus.NEW, MonitorStatus.LATE]))
             .all()
         )
         for monitor in candidates:
             if monitor.last_ping_at is None:
-                # Never pinged — only alert once it's had a full period+grace to check in.
-                deadline = monitor.created_at + timedelta(
+                # Never pinged — baseline off creation instead of a ping.
+                late_at = monitor.created_at + timedelta(seconds=monitor.period_seconds)
+                down_at = monitor.created_at + timedelta(
                     seconds=monitor.period_seconds + monitor.grace_seconds
                 )
             else:
-                deadline = monitor.deadline
+                late_at = monitor.late_at
+                down_at = monitor.deadline
 
-            if deadline is not None and now > deadline:
-                monitor.status = MonitorStatus.DOWN
-                db.add(StatusEvent(monitor_id=monitor.id, status=MonitorStatus.DOWN, changed_at=now))
-                flipped += 1
+            if down_at is not None and now > down_at:
+                if monitor.status != MonitorStatus.DOWN:
+                    monitor.status = MonitorStatus.DOWN
+                    db.add(StatusEvent(monitor_id=monitor.id, status=MonitorStatus.DOWN, changed_at=now))
+                    changed += 1
                 if not monitor.alert_sent:
                     send_alert_email(monitor.owner.email, monitor.name)
                     monitor.alert_sent = True
+            elif late_at is not None and now > late_at:
+                if monitor.status != MonitorStatus.LATE:
+                    monitor.status = MonitorStatus.LATE
+                    db.add(StatusEvent(monitor_id=monitor.id, status=MonitorStatus.LATE, changed_at=now))
+                    changed += 1
 
         db.commit()
     finally:
         db.close()
 
-    return flipped
+    return changed
 
 
 @celery_app.task(name="app.tasks.check_inactive_accounts")

@@ -15,7 +15,8 @@ def utcnow() -> datetime:
 class MonitorStatus(str, enum.Enum):
     NEW = "new"        # created, never pinged yet
     UP = "up"          # pinged within the expected window
-    DOWN = "down"       # overdue, alert has fired
+    LATE = "late"        # past period, still inside grace — early warning, no alert yet
+    DOWN = "down"           # past period + grace, alert has fired
     PAUSED = "paused"    # user disabled checks
 
 
@@ -71,7 +72,18 @@ class Monitor(Base):
     )
 
     @property
+    def late_at(self) -> datetime | None:
+        """When this monitor enters the 'late' warning state — period has
+        passed but it's still inside the grace window, so no alert yet."""
+        if self.last_ping_at is None:
+            return None
+        from datetime import timedelta
+        return self.last_ping_at + timedelta(seconds=self.period_seconds)
+
+    @property
     def deadline(self) -> datetime | None:
+        """When this monitor is actually 'down' — period + grace has passed,
+        an alert fires."""
         if self.last_ping_at is None:
             return None
         from datetime import timedelta
