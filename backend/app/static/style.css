@@ -72,6 +72,10 @@ body {
   flex-direction: column;
   padding: 1.5rem 1rem;
   border-right: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .sidebar .brand {
@@ -131,14 +135,30 @@ body {
   .sidebar {
     width: 100%;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    padding: 1rem;
+    padding: 0.75rem 1rem;
+    row-gap: 0.5rem;
+    position: static;
+    height: auto;
+    overflow-y: visible;
   }
   .sidebar .brand { margin-bottom: 0; }
-  .sidebar-nav { flex-direction: row; }
+  /* Brand + footer controls share the first row (footer isn't last in the
+     DOM, but "order" puts it there); nav wraps to its own full-width row
+     below — four links plus brand plus controls all forced onto one row
+     was overflowing the viewport on mobile. */
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 0.5rem 1rem;
+  }
   .sidebar-footer { flex-direction: row; margin-top: 0; padding: 0; }
   .sidebar-user { display: none; }
   .app-main { padding: 1.5rem 1rem; }
@@ -248,7 +268,13 @@ button {
   text-decoration: underline;
 }
 
-.link-button.danger { color: var(--down); }
+/* Explicit background here is load-bearing, not decoration: this element is
+   a <button class="link-button danger">, and button.danger's red background
+   (below) also matches it. .link-button.danger has higher CSS specificity
+   (two classes vs. one class + one tag), so this wins — without it, the
+   button.danger background would apply anyway and put red text on a red
+   background, exactly the bug that was reported. */
+.link-button.danger { color: var(--down); background: none; }
 
 .muted { color: var(--muted); font-size: 0.9rem; }
 .error { color: var(--down); }
