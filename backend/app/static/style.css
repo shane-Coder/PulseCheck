@@ -1,10 +1,10 @@
 :root {
   color-scheme: light dark;
-  --bg: #0f1115;
-  --card: #171a21;
-  --border: #2a2e37;
-  --text: #e6e8eb;
-  --muted: #8b909b;
+  --bg: #f5f6f8;
+  --card: #ffffff;
+  --border: #dde1e6;
+  --text: #1a1d23;
+  --muted: #667085;
   --accent: #4f8cff;
   --up: #35c96c;
   --late: #c9a63f;
@@ -14,14 +14,14 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Dark is the default (matches the app's original look for anyone with no
-   saved preference yet) — light is opt-in via the theme toggle. */
-:root[data-theme="light"] {
-  --bg: #f5f6f8;
-  --card: #ffffff;
-  --border: #dde1e6;
-  --text: #1a1d23;
-  --muted: #667085;
+/* Light is the default for anyone with no saved preference — dark is
+   opt-in via the theme toggle. */
+:root[data-theme="dark"] {
+  --bg: #0f1115;
+  --card: #171a21;
+  --border: #2a2e37;
+  --text: #e6e8eb;
+  --muted: #8b909b;
 }
 
 * { box-sizing: border-box; }
