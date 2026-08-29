@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Boolean
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -26,6 +26,10 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Shown in the nav instead of the raw email — no product should put your
+    # bare email address in the UI chrome everywhere. Falls back to email
+    # wherever this is unset (see is_admin_email usage sites and templates).
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     # Stamped on register/login. Combined with each monitor's last_ping_at to
@@ -63,6 +67,11 @@ class Monitor(Base):
     last_ping_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     alert_sent: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Comma-separated — good enough for organizing/scanning a list of
+    # monitors without a join table. No filter-by-tag UI yet, just display.
+    tags: Mapped[str] = mapped_column(String(255), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     owner: Mapped["User"] = relationship(back_populates="monitors")
@@ -70,6 +79,10 @@ class Monitor(Base):
     status_events: Mapped[list["StatusEvent"]] = relationship(
         back_populates="monitor", cascade="all, delete-orphan", order_by="StatusEvent.changed_at"
     )
+
+    @property
+    def tag_list(self) -> list[str]:
+        return [t.strip() for t in self.tags.split(",") if t.strip()]
 
     @property
     def late_at(self) -> datetime | None:

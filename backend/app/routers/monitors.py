@@ -109,6 +109,8 @@ def edit_monitor(
     name: str = Form(...),
     period_seconds: int = Form(...),
     grace_seconds: int = Form(...),
+    tags: str = Form(""),
+    notes: str = Form(""),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -123,6 +125,8 @@ def edit_monitor(
     monitor.name = name
     monitor.period_seconds = max(period_seconds, 60)
     monitor.grace_seconds = max(grace_seconds, 0)
+    monitor.tags = tags.strip()
+    monitor.notes = notes.strip()
     db.commit()
     return RedirectResponse(url=f"/monitors/{monitor_id}", status_code=status.HTTP_302_FOUND)
 

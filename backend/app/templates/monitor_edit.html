@@ -16,6 +16,12 @@
     <label>Grace period (seconds)
       <input type="number" name="grace_seconds" value="{{ monitor.grace_seconds }}" min="0" required>
     </label>
+    <label style="flex-basis: 100%;">Tags <span class="muted">(comma-separated)</span>
+      <input type="text" name="tags" value="{{ monitor.tags }}" placeholder="production, backup, database">
+    </label>
+    <label style="flex-basis: 100%;">Notes
+      <textarea name="notes" rows="3" placeholder="What this monitors, where it runs, anything worth remembering later">{{ monitor.notes }}</textarea>
+    </label>
     <button type="submit">Save changes</button>
   </form>
 </div>

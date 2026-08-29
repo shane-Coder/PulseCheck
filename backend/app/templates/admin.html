@@ -20,6 +20,7 @@
     <tr>
       <td>
         {{ u.email }}
+        {% if u.display_name %}<span class="muted">({{ u.display_name }})</span>{% endif %}
         {% if is_admin_email(u.email) %}<span class="badge status-up">admin</span>{% endif %}
       </td>
       <td>{{ u.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</td>

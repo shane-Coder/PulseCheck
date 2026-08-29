@@ -14,6 +14,16 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Dark is the default (matches the app's original look for anyone with no
+   saved preference yet) — light is opt-in via the theme toggle. */
+:root[data-theme="light"] {
+  --bg: #f5f6f8;
+  --card: #ffffff;
+  --border: #dde1e6;
+  --text: #1a1d23;
+  --muted: #667085;
+}
+
 * { box-sizing: border-box; }
 
 body {
@@ -49,6 +59,91 @@ body {
   padding: 2rem;
 }
 
+/* Logged-in app shell: sidebar + content, instead of the marketing top bar */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  border-right: 1px solid var(--border);
+}
+
+.sidebar .brand {
+  padding: 0 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebar-nav a {
+  color: var(--text);
+  text-decoration: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.sidebar-nav a:hover {
+  background: var(--card);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+.sidebar-user {
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.95rem;
+  align-self: flex-start;
+  line-height: 1;
+}
+
+.app-main {
+  flex: 1;
+  max-width: 900px;
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .app-shell { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 1rem;
+  }
+  .sidebar .brand { margin-bottom: 0; }
+  .sidebar-nav { flex-direction: row; }
+  .sidebar-footer { flex-direction: row; margin-top: 0; padding: 0; }
+  .sidebar-user { display: none; }
+  .app-main { padding: 1.5rem 1rem; }
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -77,16 +172,32 @@ label {
   color: var(--muted);
 }
 
-input {
+input, textarea {
   display: block;
   width: 100%;
   margin-top: 0.35rem;
   padding: 0.55rem;
   border-radius: 6px;
   border: 1px solid var(--border);
-  background: #0f1115;
+  background: var(--bg);
   color: var(--text);
   font-size: 1rem;
+  font-family: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.tag-pill {
+  display: inline-block;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  margin-left: 0.4rem;
 }
 
 .inline-form {
@@ -219,7 +330,11 @@ button.secondary {
   min-width: 2px;
 }
 
+.status-late-text { color: var(--late); }
+.status-down-text { color: var(--down); }
+
 .status-fill-up { background: var(--up); }
+.status-fill-late { background: var(--late); }
 .status-fill-down { background: var(--down); }
 .status-fill-new { background: var(--new); }
 .status-fill-paused { background: var(--paused); }
@@ -268,7 +383,7 @@ button.secondary {
 
 .ping-url {
   display: block;
-  background: #0f1115;
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.75rem;
@@ -277,7 +392,7 @@ button.secondary {
 }
 
 pre {
-  background: #0f1115;
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.75rem;
@@ -295,7 +410,7 @@ pre {
 .card h3:first-of-type { margin-top: 0; }
 
 .card code {
-  background: #0f1115;
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 0.1rem 0.35rem;

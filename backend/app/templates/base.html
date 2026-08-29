@@ -5,30 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}PulseCheck{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css">
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("pulsecheck_theme");
+        if (saved) document.documentElement.setAttribute("data-theme", saved);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="/">PulseCheck</a>
-    {% if user %}
-      <nav>
+{% if user %}
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/">PulseCheck</a>
+      <nav class="sidebar-nav">
+        <a href="/">Monitors</a>
         <a href="/docs">Docs</a>
         <a href="/account">Account</a>
         {% if is_admin_email(user.email) %}<a href="/admin">Admin</a>{% endif %}
-        <span class="muted">{{ user.email }}</span>
-        <form method="post" action="/logout" style="display:inline">
+      </nav>
+      <div class="sidebar-footer">
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark theme">☀️</button>
+        <span class="muted sidebar-user">{{ user.display_name or user.email }}</span>
+        <form method="post" action="/logout">
           <button class="link-button" type="submit">Log out</button>
         </form>
-      </nav>
-    {% else %}
-      <nav>
-        <a href="/docs">Docs</a>
-        <a href="/login">Log in</a>
-        <a href="/register">Sign up</a>
-      </nav>
-    {% endif %}
+      </div>
+    </aside>
+    <main class="app-main">
+{% else %}
+  <header class="topbar">
+    <a class="brand" href="/">PulseCheck</a>
+    <nav>
+      <a href="/docs">Docs</a>
+      <a href="/login">Log in</a>
+      <a href="/register">Sign up</a>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark theme">☀️</button>
+    </nav>
   </header>
   <main class="container">
-    {% block content %}{% endblock %}
+{% endif %}
+      {% block content %}{% endblock %}
+{% if user %}
+    </main>
+  </div>
+{% else %}
   </main>
+{% endif %}
+
+  <script>
+    (function () {
+      var btn = document.getElementById("theme-toggle");
+      if (!btn) return;
+      function current() {
+        return document.documentElement.getAttribute("data-theme") || "dark";
+      }
+      function apply(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        try { localStorage.setItem("pulsecheck_theme", theme); } catch (e) {}
+        btn.textContent = theme === "light" ? "🌙" : "☀️";
+      }
+      btn.textContent = current() === "light" ? "🌙" : "☀️";
+      btn.addEventListener("click", function () {
+        apply(current() === "light" ? "dark" : "light");
+      });
+    })();
+  </script>
 </body>
 </html>

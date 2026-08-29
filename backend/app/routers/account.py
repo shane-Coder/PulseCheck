@@ -19,6 +19,21 @@ def account_home(request: Request, user: User = Depends(get_current_user)):
     )
 
 
+@router.post("/display-name")
+def update_display_name(
+    request: Request,
+    display_name: str = Form(""),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    user.display_name = display_name.strip() or None
+    db.commit()
+    return templates.TemplateResponse(
+        "account.html",
+        {"request": request, "user": user, "error": None, "success": "Display name updated."},
+    )
+
+
 @router.post("/password")
 def change_password(
     request: Request,

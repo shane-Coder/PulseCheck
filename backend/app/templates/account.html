@@ -6,6 +6,17 @@
 {% if success %}<p class="success">{{ success }}</p>{% endif %}
 
 <div class="card">
+  <h2>Display name</h2>
+  <p class="muted">Shown in the nav instead of your email. Leave blank to just show your email.</p>
+  <form method="post" action="/account/display-name" class="inline-form">
+    <label>Display name
+      <input type="text" name="display_name" value="{{ user.display_name or '' }}" placeholder="{{ user.email }}" maxlength="255">
+    </label>
+    <button type="submit">Save</button>
+  </form>
+</div>
+
+<div class="card">
   <h2>Change password</h2>
   <form method="post" action="/account/password">
     <label>Current password

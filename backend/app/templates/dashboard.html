@@ -60,7 +60,10 @@
   <tbody>
     {% for m in monitors %}
     <tr>
-      <td><a href="/monitors/{{ m.id }}">{{ m.name }}</a></td>
+      <td>
+        <a href="/monitors/{{ m.id }}">{{ m.name }}</a>
+        {% for tag in m.tag_list %}<span class="tag-pill">{{ tag }}</span>{% endfor %}
+      </td>
       <td><span class="badge status-{{ m.status.value }}">{{ m.status.value }}</span></td>
       <td>{{ m.last_ping_at.strftime("%Y-%m-%d %H:%M UTC") if m.last_ping_at else "never" }}</td>
       <td>{{ m.period_seconds }}s (+{{ m.grace_seconds }}s grace)</td>
