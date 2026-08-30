@@ -15,7 +15,12 @@ primary_region = 'sin'
   # machine. Only safe with exactly one worker instance (which is all we
   # run) — multiple workers each with embedded beat would double-schedule
   # every task.
-  worker = 'celery -A app.celery_app.celery_app worker --beat --loglevel=info --concurrency=2'
+  # --without-gossip/--without-mingle/--without-heartbeat: these exist so
+  # multiple workers can discover and coordinate with each other — pure
+  # overhead (continuous Redis pub/sub chatter) with only one worker, which
+  # is all we run. Confirmed via Redis INFO this instance was sustaining
+  # ~6 ops/sec even fully idle before this change.
+  worker = 'celery -A app.celery_app.celery_app worker --beat --loglevel=info --concurrency=2 --without-gossip --without-mingle --without-heartbeat'
 
 [http_service]
   internal_port = 8000

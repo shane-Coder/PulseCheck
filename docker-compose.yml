@@ -55,8 +55,9 @@ services:
       - ./backend/app:/app/app
     # --beat embeds the scheduler in this same process instead of a separate
     # beat container — safe only with exactly one worker instance, which is
-    # all we run.
-    command: celery -A app.celery_app.celery_app worker --beat --loglevel=info
+    # all we run. --without-gossip/mingle/heartbeat: multi-worker
+    # coordination chatter, pure overhead with a single worker.
+    command: celery -A app.celery_app.celery_app worker --beat --loglevel=info --without-gossip --without-mingle --without-heartbeat
 
 volumes:
   postgres-data:

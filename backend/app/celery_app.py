@@ -6,7 +6,12 @@ from app.config import settings
 celery_app = Celery(
     "pulsecheck",
     broker=settings.redis_url,
-    backend=settings.redis_url,
+    # No result backend: nothing in this app ever reads a task's return
+    # value or checks its state (no .get()/.delay()-and-wait/AsyncResult
+    # anywhere) — both scheduled tasks are fire-and-forget. Configuring a
+    # backend anyway means Celery writes a result to Redis on every single
+    # task run for no reason, which is pure wasted command volume on a
+    # billed-per-command Redis plan.
     include=["app.tasks"],
 )
 
