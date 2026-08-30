@@ -27,3 +27,11 @@ celery_app.conf.beat_schedule = {
 }
 
 celery_app.conf.timezone = "UTC"
+
+# Kombu's Redis broker transport defaults to a sub-second polling interval
+# for the broker queue — sensible for a real-time task queue, pure waste
+# here: our fastest scheduled task only needs to run once a minute, and a
+# missed monitor check being picked up a few seconds late is completely
+# unnoticeable. Confirmed via Redis INFO this was a real, ongoing
+# contributor to command volume on a per-command-billed plan.
+celery_app.conf.broker_transport_options = {"polling_interval": 5.0}
