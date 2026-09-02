@@ -6,8 +6,11 @@ name: Run inactivity check
 # sensitive.
 
 on:
-  schedule:
-    - cron: "0 3 * * *"
+  # Paused: the live demo is in maintenance mode (see app/maintenance.py),
+  # so this would just hit a 503 once a day for nothing. Re-enable the
+  # schedule line once maintenance mode is off and the DB is running again.
+  # schedule:
+  #   - cron: "0 3 * * *"
   workflow_dispatch:
 
 jobs:

@@ -12,8 +12,11 @@ name: Run overdue check
 # deliberate cost/responsiveness trade-off, not an oversight.
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
+  # Paused: the live demo is in maintenance mode (see app/maintenance.py),
+  # so this would just hit a 503 every 5 minutes for nothing. Re-enable the
+  # schedule line once maintenance mode is off and the DB is running again.
+  # schedule:
+  #   - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
