@@ -26,6 +26,21 @@ def register(
     password: str = Form(...),
     db: Session = Depends(get_db),
 ):
+    # Normalized once, here, so every future lookup (login, admin grants,
+    # password reset if that's ever added) can compare case-insensitively
+    # without remembering to re-normalize each time. Without this,
+    # "Foo@x.com" and "foo@x.com" register as two different accounts, and
+    # someone who typed their email in a different case at login than at
+    # signup gets a confusing "invalid password" instead of logging in.
+    email = email.strip().lower()
+
+    if "@" not in email or "." not in email.rsplit("@", 1)[-1] or len(email) > 255:
+        return templates.TemplateResponse(
+            "register.html",
+            {"request": request, "error": "Enter a valid email address."},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
     if db.query(User).filter(User.email == email).first():
         return templates.TemplateResponse(
             "register.html",
@@ -37,6 +52,17 @@ def register(
         return templates.TemplateResponse(
             "register.html",
             {"request": request, "error": "Password must be at least 8 characters."},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # bcrypt silently ignores anything past 72 bytes rather than erroring —
+    # without this check, someone who sets a 100-character password would
+    # have their account effectively "protected" by only its first 72
+    # bytes, with no indication that's what happened.
+    if len(password.encode("utf-8")) > 72:
+        return templates.TemplateResponse(
+            "register.html",
+            {"request": request, "error": "Password must be 72 characters or fewer."},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -63,6 +89,7 @@ def login(
     password: str = Form(...),
     db: Session = Depends(get_db),
 ):
+    email = email.strip().lower()
     user = db.query(User).filter(User.email == email).first()
     if user is None or not verify_password(password, user.hashed_password):
         return templates.TemplateResponse(

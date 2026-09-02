@@ -55,7 +55,11 @@ class Monitor(Base):
     __tablename__ = "monitors"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    # index=True: Postgres does NOT automatically index foreign key columns
+    # (unlike the primary key they reference) — without this, the
+    # dashboard's "monitors WHERE owner_id = ?" query is a sequential scan
+    # over every monitor in the table, for every user, on every page load.
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     ping_token: Mapped[str] = mapped_column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
 
@@ -107,7 +111,7 @@ class PingEvent(Base):
     __tablename__ = "ping_events"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    monitor_id: Mapped[int] = mapped_column(ForeignKey("monitors.id"), nullable=False)
+    monitor_id: Mapped[int] = mapped_column(ForeignKey("monitors.id"), nullable=False, index=True)
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     source_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
@@ -122,7 +126,7 @@ class StatusEvent(Base):
     __tablename__ = "status_events"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    monitor_id: Mapped[int] = mapped_column(ForeignKey("monitors.id"), nullable=False)
+    monitor_id: Mapped[int] = mapped_column(ForeignKey("monitors.id"), nullable=False, index=True)
     status: Mapped[MonitorStatus] = mapped_column(Enum(MonitorStatus), nullable=False)
     changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

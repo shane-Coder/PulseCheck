@@ -1,3 +1,5 @@
+import time
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -5,10 +7,32 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.deps import get_current_user, get_current_user_optional
 from app.models import Monitor, MonitorStatus, StatusEvent, User, utcnow
+from app.rate_limit import limiter
 from app.templating import templates
 from app.timeline import build_uptime_timeline
 
 router = APIRouter(tags=["monitors"])
+
+# Sanity bounds, not arbitrary red tape: below 60s isn't meaningfully
+# different from "always late" given how the check cadence works, and a
+# multi-year period/grace is almost certainly a typo (an extra zero) rather
+# than an intentional setting. Clamped rather than rejected, matching how
+# this codebase already treats these two fields.
+MIN_PERIOD_SECONDS = 60
+MAX_PERIOD_SECONDS = 60 * 60 * 24 * 365
+MAX_GRACE_SECONDS = 60 * 60 * 24 * 30
+MAX_NAME_LENGTH = 255
+MAX_TAGS_LENGTH = 255
+MAX_NOTES_LENGTH = 5000
+
+
+def _clean_name(name: str) -> str:
+    name = name.strip()[:MAX_NAME_LENGTH]
+    if name:
+        return name
+    # An empty name is worse than a generic one — this only happens if
+    # someone submits the form with the name field cleared entirely.
+    return f"monitor-{int(time.time())}"
 
 
 @router.get("/")
@@ -49,7 +73,9 @@ def home(
 
 
 @router.post("/monitors")
+@limiter.limit("30/minute")
 def create_monitor(
+    request: Request,
     name: str = Form(...),
     period_seconds: int = Form(86400),
     grace_seconds: int = Form(3600),
@@ -58,9 +84,9 @@ def create_monitor(
 ):
     monitor = Monitor(
         owner_id=user.id,
-        name=name,
-        period_seconds=max(period_seconds, 60),
-        grace_seconds=max(grace_seconds, 0),
+        name=_clean_name(name),
+        period_seconds=min(max(period_seconds, MIN_PERIOD_SECONDS), MAX_PERIOD_SECONDS),
+        grace_seconds=min(max(grace_seconds, 0), MAX_GRACE_SECONDS),
     )
     db.add(monitor)
     db.flush()  # populate monitor.id / created_at before the timeline's first event
@@ -119,7 +145,9 @@ def edit_monitor_form(
 
 
 @router.post("/monitors/{monitor_id}/edit")
+@limiter.limit("30/minute")
 def edit_monitor(
+    request: Request,
     monitor_id: int,
     name: str = Form(...),
     period_seconds: int = Form(...),
@@ -137,17 +165,19 @@ def edit_monitor(
     if monitor is None:
         raise HTTPException(status_code=404, detail="Monitor not found")
 
-    monitor.name = name
-    monitor.period_seconds = max(period_seconds, 60)
-    monitor.grace_seconds = max(grace_seconds, 0)
-    monitor.tags = tags.strip()
-    monitor.notes = notes.strip()
+    monitor.name = _clean_name(name)
+    monitor.period_seconds = min(max(period_seconds, MIN_PERIOD_SECONDS), MAX_PERIOD_SECONDS)
+    monitor.grace_seconds = min(max(grace_seconds, 0), MAX_GRACE_SECONDS)
+    monitor.tags = tags.strip()[:MAX_TAGS_LENGTH]
+    monitor.notes = notes.strip()[:MAX_NOTES_LENGTH]
     db.commit()
     return RedirectResponse(url=f"/monitors/{monitor_id}", status_code=status.HTTP_302_FOUND)
 
 
 @router.post("/monitors/{monitor_id}/pause")
+@limiter.limit("30/minute")
 def pause_monitor(
+    request: Request,
     monitor_id: int,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -168,7 +198,9 @@ def pause_monitor(
 
 
 @router.post("/monitors/{monitor_id}/delete")
+@limiter.limit("30/minute")
 def delete_monitor(
+    request: Request,
     monitor_id: int,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
