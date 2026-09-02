@@ -28,8 +28,23 @@ def home(
         .order_by(Monitor.created_at.desc())
         .all()
     )
+    # Scan-first overview strip on the dashboard: counts, not prose — see
+    # the status-summary component in style.css.
+    status_counts = {
+        "up": sum(1 for m in monitors if m.status == MonitorStatus.UP),
+        "late": sum(1 for m in monitors if m.status == MonitorStatus.LATE),
+        "down": sum(1 for m in monitors if m.status == MonitorStatus.DOWN),
+        "new": sum(1 for m in monitors if m.status == MonitorStatus.NEW),
+        "paused": sum(1 for m in monitors if m.status == MonitorStatus.PAUSED),
+    }
     return templates.TemplateResponse(
-        "dashboard.html", {"request": request, "user": user, "monitors": monitors}
+        "dashboard.html",
+        {
+            "request": request,
+            "user": user,
+            "monitors": monitors,
+            "status_counts": status_counts,
+        },
     )
 
 

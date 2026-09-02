@@ -5,6 +5,33 @@
   <h1>Your monitors</h1>
 </div>
 
+{% if monitors %}
+<div class="status-summary">
+  <div class="stat-tile tile-up">
+    <span class="stat-count">{{ status_counts.up }}</span>
+    <span class="stat-label">Up</span>
+  </div>
+  <div class="stat-tile tile-late">
+    <span class="stat-count">{{ status_counts.late }}</span>
+    <span class="stat-label">Late</span>
+  </div>
+  <div class="stat-tile tile-down">
+    <span class="stat-count">{{ status_counts.down }}</span>
+    <span class="stat-label">Down</span>
+  </div>
+  {% if status_counts.new %}
+  <div class="stat-tile tile-new">
+    <span class="stat-count">{{ status_counts.new }}</span>
+    <span class="stat-label">New</span>
+  </div>
+  {% endif %}
+  <div class="stat-tile tile-paused">
+    <span class="stat-count">{{ status_counts.paused }}</span>
+    <span class="stat-label">Paused</span>
+  </div>
+</div>
+{% endif %}
+
 <details class="card intro-panel" id="intro-panel" open>
   <summary>What is PulseCheck, and how do I use it?</summary>
 
@@ -65,8 +92,8 @@
         {% for tag in m.tag_list %}<span class="tag-pill">{{ tag }}</span>{% endfor %}
       </td>
       <td><span class="badge status-{{ m.status.value }}">{{ m.status.value }}</span></td>
-      <td>{{ m.last_ping_at.strftime("%Y-%m-%d %H:%M UTC") if m.last_ping_at else "never" }}</td>
-      <td>{{ m.period_seconds }}s (+{{ m.grace_seconds }}s grace)</td>
+      <td class="mono">{{ m.last_ping_at.strftime("%Y-%m-%d %H:%M UTC") if m.last_ping_at else "never" }}</td>
+      <td class="mono">{{ m.period_seconds }}s (+{{ m.grace_seconds }}s grace)</td>
       <td>
         <form method="post" action="/monitors/{{ m.id }}/pause" style="display:inline">
           <button class="link-button" type="submit">{{ "resume" if m.status.value == "paused" else "pause" }}</button>
