@@ -231,6 +231,15 @@ h1, h2, h3 { text-wrap: balance; }
 
 .app-main {
   flex: 1;
+  /* min-width: 0 is the actual fix here, not max-width — a flex item
+     defaults to min-width: auto, which means it won't shrink below its
+     content's intrinsic width no matter what max-width says. A long
+     unbreakable ping URL or cron one-liner anywhere inside was enough to
+     force this whole column (and the page) wider than the viewport;
+     min-width: 0 lets flexbox actually shrink it, so the overflow-x:auto
+     on individual code/pre blocks can do its job instead of being
+     overridden by their ancestor's width. */
+  min-width: 0;
   max-width: 920px;
   padding: 2.25rem 2rem;
 }
@@ -342,7 +351,12 @@ textarea {
   align-items: stretch;
 }
 
-.ping-url-row .ping-url { flex: 1; margin: 0; }
+/* min-width: 0 overrides the flex default of min-width: auto — without it,
+   a flex item won't shrink below its content's natural width, so this
+   long, unbreakable URL string was pushing the Copy button off the edge
+   of the page entirely (confirmed: caused real horizontal page overflow,
+   not just a squeeze). */
+.ping-url-row .ping-url { flex: 1; min-width: 0; margin: 0; }
 
 .copy-btn {
   flex-shrink: 0;
@@ -575,10 +589,13 @@ button.secondary:hover { background: var(--surface-2); }
   margin-right: 0.35rem;
 }
 
+.table-scroll { overflow-x: auto; }
+
 .monitor-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.94rem;
+  min-width: 480px;
 }
 
 .monitor-table th, .monitor-table td {
@@ -632,6 +649,8 @@ button.secondary:hover { background: var(--surface-2); }
 .status-down { background: var(--down-bg); color: var(--down); }
 .status-new { background: var(--new-bg); color: var(--new); }
 .status-paused { background: var(--paused-bg); color: var(--paused); }
+.badge-neutral { background: var(--accent-bg); color: var(--accent-strong); }
+.badge-neutral::before { display: none; }
 
 .ping-url {
   display: block;

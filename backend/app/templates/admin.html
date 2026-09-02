@@ -6,6 +6,7 @@
 </div>
 <p class="muted">{{ rows|length }} account{{ "s" if rows|length != 1 else "" }} total.</p>
 
+<div class="table-scroll">
 <table class="monitor-table">
   <thead>
     <tr>
@@ -21,7 +22,7 @@
       <td>
         {{ u.email }}
         {% if u.display_name %}<span class="muted">({{ u.display_name }})</span>{% endif %}
-        {% if is_admin_email(u.email) %}<span class="badge status-up">admin</span>{% endif %}
+        {% if is_admin_email(u.email) %}<span class="badge badge-neutral">admin</span>{% endif %}
       </td>
       <td>{{ u.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</td>
       <td>{{ monitor_count }}</td>
@@ -38,4 +39,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

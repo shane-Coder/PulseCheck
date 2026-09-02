@@ -56,6 +56,13 @@ def change_password(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
+    if len(new_password.encode("utf-8")) > 72:
+        return templates.TemplateResponse(
+            "account.html",
+            {"request": request, "user": user, "error": "Password must be 72 characters or fewer.", "success": None},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
     user.hashed_password = hash_password(new_password)
     db.commit()
     return templates.TemplateResponse(

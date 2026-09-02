@@ -76,6 +76,7 @@ task = PythonOperator(
 <div class="card">
   <h2>How this fits next to Prometheus + Grafana</h2>
   <p>If you're already running Prometheus and Grafana, PulseCheck isn't a replacement — it's covering a blind spot those tools have by design.</p>
+  <div class="table-scroll">
   <table class="compare-table">
     <thead>
       <tr><th></th><th>Prometheus + Grafana</th><th>PulseCheck</th></tr>
@@ -87,6 +88,7 @@ task = PythonOperator(
       <tr><td>Setup</td><td>Exporter + scrape config + alert rules</td><td>One curl call at the end of your job</td></tr>
     </tbody>
   </table>
+  </div>
   <p class="muted">There's a Prometheus-compatible <code>/metrics</code> endpoint, scoped to your account with a token — find your URL and an example scrape config on your <a href="/account">account settings</a> page.</p>
 </div>
 
@@ -105,6 +107,7 @@ task = PythonOperator(
 
 <div class="card">
   <h2>How this differs from other tools</h2>
+  <div class="table-scroll">
   <table class="compare-table">
     <thead>
       <tr><th>Tool</th><th>Checks</th><th>Difference</th></tr>
@@ -115,6 +118,7 @@ task = PythonOperator(
       <tr><td>Healthchecks.io / Cronitor</td><td>Same dead man's switch concept</td><td>PulseCheck is the same idea, self-hostable, and open — you can read every line of what happens to your ping.</td></tr>
     </tbody>
   </table>
+  </div>
 </div>
 
 <div class="card">

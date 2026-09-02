@@ -74,6 +74,7 @@
 </div>
 
 {% if monitors %}
+<div class="table-scroll">
 <table class="monitor-table">
   <thead>
     <tr>
@@ -106,6 +107,7 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% else %}
 <p class="muted">No monitors yet — create one above to get a ping URL.</p>
 {% endif %}
