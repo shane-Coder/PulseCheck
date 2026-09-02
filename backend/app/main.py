@@ -8,7 +8,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.database import Base, engine
 from app.rate_limit import limiter
-from app.routers import account, admin, auth, metrics, monitors, pages, ping
+from app.routers import account, admin, auth, internal, metrics, monitors, pages, ping
 
 # docs_url/redoc_url disabled: FastAPI's built-in interactive API docs default
 # to "/docs" too, which silently wins the route over our own docs page since
@@ -23,6 +23,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(account.router)
 app.include_router(admin.router)
 app.include_router(auth.router)
+app.include_router(internal.router)
 app.include_router(metrics.router)
 app.include_router(monitors.router)
 app.include_router(pages.router)

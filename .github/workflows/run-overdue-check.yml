@@ -1,0 +1,33 @@
+name: Run overdue check
+
+# Replaces the old always-on Celery worker: instead of a machine sitting up
+# 24/7 polling Redis for a beat schedule, this hits the app's own
+# /internal/run-overdue-check endpoint on a schedule. The check itself is a
+# single cheap query, so this triggers it, not runs it.
+#
+# 5 minutes, not 1: GitHub does not guarantee scheduled workflows fire
+# exactly on time, and recommends against relying on anything tighter,
+# especially during periods of high load on their end. Detection lag is now
+# up to ~5-10 minutes worst case (was ~1 minute with Celery beat) — a
+# deliberate cost/responsiveness trade-off, not an oversight.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /internal/run-overdue-check
+        run: |
+          code=$(curl -s -o /tmp/response.json -w '%{http_code}' -X POST \
+            https://pulsecheck-shivam.fly.dev/internal/run-overdue-check \
+            -H "X-Internal-Token: ${{ secrets.PULSECHECK_INTERNAL_TOKEN }}")
+          echo "HTTP $code"
+          cat /tmp/response.json
+          echo ""
+          if [ "$code" != "200" ]; then
+            exit 1
+          fi

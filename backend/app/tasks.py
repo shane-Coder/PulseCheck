@@ -1,13 +1,19 @@
 from datetime import datetime, timedelta, timezone
 
-from app.celery_app import celery_app
 from app.config import settings
 from app.database import SessionLocal
 from app.email_utils import send_email
 from app.models import Monitor, MonitorStatus, StatusEvent, User
 
+# These used to be Celery tasks, run by a worker process that stayed up
+# 24/7 polling Redis for a beat schedule — most of that machine's cost for
+# two functions that together take milliseconds. They're plain functions
+# now, called directly from app/routers/internal.py, which an external
+# scheduler (GitHub Actions cron) triggers over HTTP. No broker, no
+# always-on process — the app only spends CPU on this when there's
+# actually a check to run.
 
-@celery_app.task(name="app.tasks.check_overdue_monitors")
+
 def check_overdue_monitors() -> int:
     """Runs on a fixed interval (see celery_app.py beat schedule). Three-tier
     check, matching Healthchecks.io's model rather than a plain up/down:
@@ -60,7 +66,6 @@ def check_overdue_monitors() -> int:
     return changed
 
 
-@celery_app.task(name="app.tasks.check_inactive_accounts")
 def check_inactive_accounts() -> dict:
     """Runs once a day. An account is 'active' if it's been logged into OR
     any of its monitors has received a ping recently — a monitor quietly

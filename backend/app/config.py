@@ -36,6 +36,15 @@ class Settings(BaseSettings):
 
     overdue_check_interval_seconds: int = 60
 
+    # Shared secret for the /internal/run-*-check endpoints. These replace
+    # the old always-on Celery worker: an external scheduler (GitHub Actions
+    # cron) hits them over HTTP instead of a process sitting idle 24/7
+    # polling a Redis broker. Anyone with this token can trigger a check
+    # early, which is harmless (the checks are idempotent), so this is about
+    # keeping the endpoint off random internet scanners, not real access
+    # control.
+    internal_cron_token: str = ""
+
     # Comma-separated list of emails that get admin access (/admin). No DB
     # role table for this — it's a single-owner tool right now, and an env
     # var is simpler than a migration + role-management UI for one person.
