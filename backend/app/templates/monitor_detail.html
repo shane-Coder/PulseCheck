@@ -8,19 +8,27 @@
   <a href="/monitors/{{ monitor.id }}/edit" class="link-button">edit</a>
 </div>
 
+<p class="meta-row">
+  Checks in every <strong>{{ monitor.period_seconds }}s</strong> (+{{ monitor.grace_seconds }}s grace)
+  <span class="meta-sep">&middot;</span>
+  Last ping <strong>{{ monitor.last_ping_at.strftime("%Y-%m-%d %H:%M UTC") if monitor.last_ping_at else "never" }}</strong>
+  <span class="meta-sep">&middot;</span>
+  Marked <span class="status-late-text">late</span> after {{ monitor.period_seconds }}s of silence, <span class="status-down-text">down</span> after {{ monitor.period_seconds + monitor.grace_seconds }}s
+</p>
+
+{% if monitor.tag_list %}
+<p class="tag-row">{% for tag in monitor.tag_list %}<span class="tag-pill">{{ tag }}</span>{% endfor %}</p>
+{% endif %}
+
 <div class="card">
   <h2>Ping URL</h2>
   <p class="muted">Have your job hit this URL (GET or POST) every time it completes successfully:</p>
-  <code class="ping-url">{{ request.base_url }}ping/{{ monitor.ping_token }}</code>
+  <div class="ping-url-row">
+    <code class="ping-url" id="ping-url">{{ request.base_url }}ping/{{ monitor.ping_token }}</code>
+    <button type="button" class="secondary copy-btn" id="copy-ping-url" data-default-label="Copy">Copy</button>
+  </div>
   <p class="muted">Example cron entry:</p>
   <pre>* * * * * /path/to/script.sh && curl -fsS {{ request.base_url }}ping/{{ monitor.ping_token }}</pre>
-</div>
-
-<div class="card">
-  <h2>Schedule</h2>
-  <p>Expected every <strong>{{ monitor.period_seconds }}s</strong>, with a grace period of <strong>{{ monitor.grace_seconds }}s</strong>.</p>
-  <p class="muted">Marked <span class="status-late-text">late</span> after {{ monitor.period_seconds }}s of silence, <span class="status-down-text">down</span> (alert sent) after {{ monitor.period_seconds + monitor.grace_seconds }}s.</p>
-  <p>Last ping: {{ monitor.last_ping_at.strftime("%Y-%m-%d %H:%M UTC") if monitor.last_ping_at else "never" }}</p>
 </div>
 
 <div class="card">
@@ -45,15 +53,10 @@
   </div>
 </div>
 
-{% if monitor.tag_list or monitor.notes %}
+{% if monitor.notes %}
 <div class="card">
-  <h2>Details</h2>
-  {% if monitor.tag_list %}
-  <p>{% for tag in monitor.tag_list %}<span class="tag-pill">{{ tag }}</span>{% endfor %}</p>
-  {% endif %}
-  {% if monitor.notes %}
+  <h2>Notes</h2>
   <p class="muted" style="white-space: pre-wrap;">{{ monitor.notes }}</p>
-  {% endif %}
 </div>
 {% endif %}
 
@@ -69,4 +72,18 @@
   <p class="muted">No pings received yet.</p>
   {% endif %}
 </div>
+
+<script>
+  (function () {
+    var btn = document.getElementById("copy-ping-url");
+    var urlEl = document.getElementById("ping-url");
+    if (!btn || !urlEl) return;
+    btn.addEventListener("click", function () {
+      navigator.clipboard.writeText(urlEl.textContent.trim()).then(function () {
+        btn.textContent = "Copied!";
+        setTimeout(function () { btn.textContent = btn.dataset.defaultLabel; }, 1500);
+      });
+    });
+  })();
+</script>
 {% endblock %}

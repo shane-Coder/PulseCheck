@@ -320,6 +320,37 @@ textarea {
   resize: vertical;
 }
 
+.meta-row {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 0.35rem 0 1.25rem;
+}
+
+.meta-row strong { color: var(--ink); font-weight: 600; }
+
+.meta-sep {
+  margin: 0 0.5rem;
+  color: var(--line);
+}
+
+.tag-row { margin: -0.5rem 0 1.25rem; }
+.tag-row .tag-pill { margin-left: 0; margin-right: 0.4rem; }
+
+.ping-url-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+
+.ping-url-row .ping-url { flex: 1; margin: 0; }
+
+.copy-btn {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  min-width: 5rem;
+}
+
 .tag-pill {
   display: inline-block;
   background: var(--surface-2);
