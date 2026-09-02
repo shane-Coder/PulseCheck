@@ -229,6 +229,12 @@ h1, h2, h3 { text-wrap: balance; }
   line-height: 1;
 }
 
+/* Without this, the generic button:hover rule further down (element +
+   pseudo-class beats a single class) paints a solid teal box behind the
+   theme icon on hover instead of the subtle highlight actually intended
+   here. */
+.theme-toggle:hover { background: var(--surface-2); }
+
 .app-main {
   flex: 1;
   /* min-width: 0 is the actual fix here, not max-width — a flex item
@@ -402,7 +408,14 @@ textarea {
   border-radius: 999px;
 }
 
+/* background: none is doing real work here, not just resetting to the rest
+   state — button:hover (element+pseudo-class, further down this file)
+   otherwise beats a single-class selector like this one and paints a solid
+   teal background under teal hover text, swallowing the label completely.
+   Same root cause as the .link-button.danger fix below; this is the same
+   bug hitting a different element. */
 .template-btn:hover {
+  background: none;
   border-color: var(--accent);
   color: var(--accent-strong);
 }
@@ -429,6 +442,14 @@ button:hover { background: var(--accent-strong); }
   font-weight: 500;
 }
 
+/* Real bug, not defensive paranoia: .link-button is a <button>, so it's
+   also targeted by button:hover further down this file. That rule has
+   higher specificity (element+pseudo-class beats a lone class) and sets a
+   solid teal background, which combined with this element's teal text
+   made "pause"/"resume"/"edit" links go fully unreadable on hover — the
+   text wasn't just low-contrast, the background matched the text color. */
+.link-button:hover { background: none; }
+
 /* Explicit background here is load-bearing, not decoration: this element is
    a <button class="link-button danger">, and button.danger's red background
    (below) also matches it. .link-button.danger has higher CSS specificity
@@ -436,6 +457,7 @@ button:hover { background: var(--accent-strong); }
    button.danger background would apply anyway and put red text on a red
    background, exactly the bug that was reported. */
 .link-button.danger { color: var(--down); background: none; }
+.link-button.danger:hover { background: none; }
 
 .muted { color: var(--muted); font-size: 0.9rem; }
 .error { color: var(--down); }
@@ -445,6 +467,10 @@ button:hover { background: var(--accent-strong); }
 
 button.danger {
   background: var(--down);
+}
+
+button.danger:hover {
+  background: color-mix(in srgb, var(--down) 82%, black);
 }
 
 .hero {

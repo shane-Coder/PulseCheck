@@ -6,7 +6,9 @@ Your scheduled job pings a unique URL every time it finishes successfully. If a 
 show up within the expected window, PulseCheck assumes something broke and emails you —
 before you find out the hard way, days later.
 
-Live: **https://pulsecheck-shivam.fly.dev**
+> **Status:** currently paused in production while I finish a UI rebuild and an architecture
+> change (see [Deployment](#deployment)) — cost-optimizing before the next relaunch, not
+> abandoned. Everything below runs fully locally via Docker in the meantime.
 
 ## Why
 
@@ -19,23 +21,27 @@ of an error.
 
 - Ping-based monitoring: one `curl` call at the end of any job (cron, Docker, Kubernetes
   CronJob, CI step, systemd timer — anything that can make an HTTP request)
-- Per-monitor expected interval + grace period, email alerts via SMTP
+- Per-monitor expected interval + grace period, with a three-tier status (up / late / down) so
+  a warning shows up before an alert email does
 - Uptime timeline and uptime % per monitor, computed from real status-transition history
 - Prometheus-compatible `/metrics` endpoint, scoped per account with a token, for pinning
   monitors onto an existing Grafana dashboard
 - Admin panel (env-var-gated) to see and manage accounts
 - Self-service account settings: change password, delete your own account
-- Rate-limited login/register, inactivity reminders + auto-delete for abandoned accounts
-- Public landing page + docs — no login wall on the marketing/explanation pages
+- Rate limiting on every state-changing endpoint (auth, monitor CRUD, pings), inactivity
+  reminders + auto-delete for abandoned accounts
+- Light/dark theme, public landing page + docs — no login wall on the marketing pages
 
 ## Stack
 
 - **API/backend:** FastAPI
 - **DB:** PostgreSQL (SQLAlchemy ORM)
-- **Scheduler/queue:** Celery + Redis (beat runs the "who's overdue" sweep and the daily
-  inactivity check — embedded in the worker process via `celery worker --beat`, since this
-  runs as a single worker instance)
-- **Frontend:** server-rendered Jinja2 templates (no separate JS build)
+- **Scheduled checks:** no background worker — the overdue-monitor sweep and daily inactivity
+  check are plain functions behind an internal, token-guarded HTTP endpoint
+  (`POST /internal/run-overdue-check`), triggered by a GitHub Actions cron in this repo
+  instead of a process that has to stay running 24/7
+- **Redis:** rate limiting only (`slowapi`) — it used to also be the Celery broker; that's gone
+- **Frontend:** server-rendered Jinja2 templates (no separate JS build), IBM Plex Sans/Mono
 - **Auth:** email + password, JWT stored in an HttpOnly cookie
 - **Alerts:** SMTP email (Slack/webhooks planned)
 
@@ -59,10 +65,19 @@ Point a cron job at it, e.g.:
 * * * * * /path/to/your/script.sh && curl -fsS http://localhost:8000/ping/<token>
 ```
 
-If a ping doesn't arrive within `period + grace` seconds, the scheduler marks the monitor
-"down" and an alert email goes out. See `/docs` on a running instance for integration
-examples (Docker, Kubernetes, GitHub Actions, systemd, Airflow) and how this fits next to
-Prometheus/Grafana.
+If a ping doesn't arrive within `period + grace` seconds, the monitor is marked down and an
+alert email goes out — but only once something actually triggers the check, since there's no
+background process doing that on its own locally. Trigger it by hand while developing:
+
+```bash
+curl -X POST localhost:8000/internal/run-overdue-check -H "X-Internal-Token: $INTERNAL_CRON_TOKEN"
+```
+
+(`INTERNAL_CRON_TOKEN` is in your `.env`.) In production this same endpoint gets called every
+few minutes by [`.github/workflows/run-overdue-check.yml`](.github/workflows/run-overdue-check.yml).
+
+See `/docs` on a running instance for integration examples (Docker, Kubernetes, GitHub
+Actions, systemd, Airflow) and how this fits next to Prometheus/Grafana.
 
 `.env.example` has every setting, including `ADMIN_EMAILS` (comma-separated emails that get
 `/admin` access) and the inactivity-cleanup thresholds. Without real SMTP credentials, emails
@@ -83,15 +98,15 @@ backend/
     deps.py                        Auth dependencies (current user, admin gate)
     rate_limit.py                   Redis-backed rate limiting (slowapi)
     timeline.py                      Uptime-timeline computation from StatusEvent history
-    celery_app.py                     Celery app + beat schedule
-    tasks.py                            Overdue sweep, inactivity reminders/deletion
-    email_utils.py                       SMTP sending helper
+    tasks.py                          Overdue sweep + inactivity reminders/deletion (plain functions)
+    email_utils.py                     SMTP sending helper
     routers/
       auth.py                              register/login/logout
       account.py                            change password, delete account, metrics URL
       admin.py                              account list + delete (env-gated)
       monitors.py                           dashboard, monitor CRUD + edit, uptime timeline
       ping.py                                the actual ping-receiving endpoint
+      internal.py                           the two endpoints the GitHub Actions cron calls
       metrics.py                            per-account Prometheus scrape endpoint
       pages.py                              /docs
     templates/                              Jinja2 HTML (landing, dashboard, docs, admin, ...)
@@ -102,15 +117,20 @@ backend/
 
 - [x] v1: monitors, email alerts, dashboard
 - [x] v2: uptime % history, Prometheus metrics, admin panel, account self-service
-- [ ] v3: Slack/generic webhook alerts, "start"/"fail" ping variants
-- [ ] v4: Stripe billing + plan limits, team accounts, public status pages, an API
+- [x] v3: UI rebuild, input hardening, DB indexing, drop the always-on worker for a
+      GitHub Actions cron
+- [ ] v4: Slack/generic webhook alerts, public status pages, "start"/"fail" ping variants
+- [ ] v5: pricing, payments, team accounts, an API
 
 ## Deployment
 
-Deployed on Fly.io (`fly.toml` in `backend/`) — one always-on worker (with beat embedded),
-one auto-stop-when-idle web process, a small Postgres cluster, and Upstash Redis. Nothing
-Fly-specific in the code itself; `docker-compose.yml` maps directly onto whatever
-Docker-based host you'd rather use (Railway, Render, your own box).
+Deployed on Fly.io (`fly.toml` in `backend/`) — an auto-stop-when-idle web process and a small
+Postgres instance. No dedicated worker machine anymore: v2 ran one 24/7 just to fire two
+scheduled checks a minute apart, which turned out to be the single biggest line item on the
+Fly bill. v3 replaced it with a GitHub Actions cron hitting an internal endpoint, cutting the
+always-on compute to just Postgres. Nothing Fly-specific in the code itself;
+`docker-compose.yml` maps directly onto whatever Docker-based host you'd rather use (Railway,
+Render, your own box).
 
 ## License
 
