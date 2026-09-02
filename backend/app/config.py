@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     base_url: str = "http://localhost:8000"
     environment: str = "development"
 
+    # When true, every request (except /healthz) gets a static "under
+    # maintenance" page instead of the real app, and startup skips touching
+    # Postgres entirely — lets the web machine serve something honest and
+    # fast off a live demo URL while Postgres/the rest of the stack are
+    # deliberately stopped, instead of a 502 after Fly tries and fails to
+    # reach a database that isn't running.
+    maintenance_mode: bool = False
+
     smtp_host: str = "localhost"
     smtp_port: int = 587
     smtp_user: str = ""

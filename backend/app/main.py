@@ -2,11 +2,13 @@ from fastapi import FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import HTTPException
 from fastapi.requests import Request
-from fastapi.responses import PlainTextResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 
+from app.config import settings
 from app.database import Base, engine
+from app.maintenance import MAINTENANCE_HTML
 from app.rate_limit import limiter
 from app.routers import account, admin, auth, internal, metrics, monitors, pages, ping
 
@@ -30,8 +32,22 @@ app.include_router(pages.router)
 app.include_router(ping.router)
 
 
+@app.middleware("http")
+async def maintenance_mode_middleware(request: Request, call_next):
+    # /healthz stays live either way — Fly's health check hitting this
+    # shouldn't depend on maintenance mode, and it never touches the DB.
+    if settings.maintenance_mode and request.url.path != "/healthz":
+        return HTMLResponse(MAINTENANCE_HTML, status_code=503)
+    return await call_next(request)
+
+
 @app.on_event("startup")
 def on_startup() -> None:
+    if settings.maintenance_mode:
+        # Nothing downstream runs in maintenance mode (the middleware above
+        # returns before any route or DB session is reached), so there's no
+        # reason to require Postgres be reachable just to boot.
+        return
     # v1: no migrations yet, just create tables if missing. Swap for Alembic
     # once the schema needs to evolve under real user data.
     Base.metadata.create_all(bind=engine)
