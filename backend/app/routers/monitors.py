@@ -154,6 +154,7 @@ def edit_monitor(
     grace_seconds: int = Form(...),
     tags: str = Form(""),
     notes: str = Form(""),
+    is_public: bool = Form(False),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -170,6 +171,7 @@ def edit_monitor(
     monitor.grace_seconds = min(max(grace_seconds, 0), MAX_GRACE_SECONDS)
     monitor.tags = tags.strip()[:MAX_TAGS_LENGTH]
     monitor.notes = notes.strip()[:MAX_NOTES_LENGTH]
+    monitor.is_public = is_public
     db.commit()
     return RedirectResponse(url=f"/monitors/{monitor_id}", status_code=status.HTTP_302_FOUND)
 

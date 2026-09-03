@@ -52,6 +52,12 @@
 </div>
 
 <div class="card">
+  <h2>Public status page</h2>
+  <p class="muted">Anyone with this link sees the name, status, and uptime of whichever monitors you've checked "show on my public status page" for — nothing else, no ping URLs or notes. Toggle it per monitor on that monitor's edit page.</p>
+  <code class="ping-url">{{ request.base_url }}status/{{ user.status_page_token }}</code>
+</div>
+
+<div class="card">
   <h2>Prometheus / Grafana</h2>
   <p class="muted">Scrape this URL to get your monitors' up/down state, last-ping time, and expected interval as Prometheus metrics — good for pinning them on an existing Grafana dashboard alongside everything else you already watch. It's scoped to your account only, so treat the URL as a secret, same as a ping URL.</p>
   <code class="ping-url">{{ request.base_url }}metrics/{{ user.metrics_token }}</code>

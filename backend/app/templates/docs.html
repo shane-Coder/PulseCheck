@@ -109,6 +109,11 @@ task = PythonOperator(
 </div>
 
 <div class="card">
+  <h2>Public status pages</h2>
+  <p>Every account has one shareable status page at <code>/status/&lt;your-token&gt;</code> (find your exact URL on <a href="/account">account settings</a>). It's opt-in per monitor — toggle "show on my public status page" on a monitor's edit page, and only that monitor's name, status, and uptime show up there. Nothing else on the page, no login, no ping URLs, no notes.</p>
+</div>
+
+<div class="card">
   <h2>Slack, Discord, and generic webhooks</h2>
   <p>Email fires on every down alert by default. Add a Slack and/or Discord incoming webhook URL — or a generic one that gets a plain JSON POST for piping into your own systems — on your <a href="/account">account settings</a> page, and the same alert goes there too. There's a "send test" button for each, so you can confirm it's wired up correctly without waiting for a real outage.</p>
 </div>
@@ -127,7 +132,6 @@ task = PythonOperator(
   <h2>What's next</h2>
   <ul>
     <li>"Start" and "fail" ping variants, to catch partial runs, not just missed ones</li>
-    <li>Public status pages</li>
     <li>Team accounts and an API for programmatic monitor management</li>
   </ul>
 </div>

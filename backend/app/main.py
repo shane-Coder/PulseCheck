@@ -10,7 +10,7 @@ from app.config import settings
 from app.database import Base, engine
 from app.maintenance import MAINTENANCE_HTML
 from app.rate_limit import limiter
-from app.routers import account, admin, auth, internal, metrics, monitors, pages, ping
+from app.routers import account, admin, auth, internal, metrics, monitors, pages, ping, status_page
 
 # docs_url/redoc_url disabled: FastAPI's built-in interactive API docs default
 # to "/docs" too, which silently wins the route over our own docs page since
@@ -30,6 +30,7 @@ app.include_router(metrics.router)
 app.include_router(monitors.router)
 app.include_router(pages.router)
 app.include_router(ping.router)
+app.include_router(status_page.router)
 
 
 @app.middleware("http")

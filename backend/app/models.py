@@ -56,6 +56,17 @@ class User(Base):
     discord_webhook_url: Mapped[str] = mapped_column(String(500), default="")
     generic_webhook_url: Mapped[str] = mapped_column(String(500), default="")
 
+    # One shareable status page per account, showing whichever of your
+    # monitors you've opted into it (Monitor.is_public below) — not per
+    # monitor, same reasoning as the webhook fields: simplest model for a
+    # single-owner-per-account tool right now. Opaque token rather than a
+    # bare user id in the URL so pages aren't enumerable by guessing ids;
+    # it's not a secret in the sense of protecting anything sensitive, just
+    # unguessable, same as ping_token/metrics_token.
+    status_page_token: Mapped[str] = mapped_column(
+        String(36), unique=True, index=True, default=lambda: str(uuid.uuid4())
+    )
+
     monitors: Mapped[list["Monitor"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
 
 
@@ -83,6 +94,13 @@ class Monitor(Base):
     # monitors without a join table. No filter-by-tag UI yet, just display.
     tags: Mapped[str] = mapped_column(String(255), default="")
     notes: Mapped[str] = mapped_column(Text, default="")
+
+    # Opt-in per monitor — off by default, since a monitor's name and
+    # uptime history isn't necessarily something you'd want anyone with
+    # your status-page link to see. The public page only ever shows
+    # monitors with this set, and only name/status/uptime — never the
+    # ping URL or notes.
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

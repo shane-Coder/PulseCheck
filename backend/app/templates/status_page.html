@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ owner_name }} status · PulseCheck{% endblock %}
+{% block content %}
+<h1>{{ owner_name }} — status</h1>
+
+{% if monitor_rows %}
+<p class="muted">Live status for the jobs shared here, updated as pings come in.</p>
+
+{% for row in monitor_rows %}
+{% set m = row.monitor %}
+{% set timeline = row.timeline %}
+<div class="card">
+  <div class="header-row">
+    <h2>{{ m.name }}</h2>
+    <span class="badge status-{{ m.status.value }}">{{ m.status.value }}</span>
+    <span class="uptime-pct" style="margin-left: auto;">{{ timeline.uptime_pct }}%</span>
+  </div>
+  <p class="muted">Since {{ timeline.window_start.strftime("%Y-%m-%d") }} ({{ (timeline.window_end - timeline.window_start).days }} day window)</p>
+  <div class="timeline-bar">
+    {% for seg in timeline.segments %}
+    <div class="timeline-segment status-fill-{{ seg.status }}"
+         style="width: {{ seg.width_pct }}%"
+         title="{{ seg.status }}: {{ seg.start.strftime('%Y-%m-%d %H:%M') }} → {{ seg.end.strftime('%Y-%m-%d %H:%M') }} UTC"></div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+<div class="timeline-legend" style="margin-top: 0.5rem;">
+  <span><i class="legend-dot status-fill-up"></i> up</span>
+  <span><i class="legend-dot status-fill-late"></i> late</span>
+  <span><i class="legend-dot status-fill-down"></i> down</span>
+  <span><i class="legend-dot status-fill-new"></i> new / no data</span>
+  <span><i class="legend-dot status-fill-paused"></i> paused</span>
+</div>
+{% else %}
+<div class="card">
+  <p class="muted">Nothing shared here yet.</p>
+</div>
+{% endif %}
+
+<p class="muted" style="text-align:center; margin-top: 2rem;">Powered by <a href="/">PulseCheck</a></p>
+{% endblock %}

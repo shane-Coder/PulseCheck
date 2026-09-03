@@ -27,6 +27,7 @@ of an error.
 - Prometheus-compatible `/metrics` endpoint, scoped per account with a token, for pinning
   monitors onto an existing Grafana dashboard
 - Slack, Discord, and generic webhook alerts alongside email, with a one-click test send for each
+- Opt-in public status pages — one shareable link per account, per-monitor toggle, name/status/uptime only
 - Admin panel (env-var-gated) to see and manage accounts
 - Self-service account settings: change password, alert channels, delete your own account
 - Rate limiting on every state-changing endpoint (auth, monitor CRUD, pings), inactivity
@@ -101,14 +102,17 @@ backend/
     timeline.py                      Uptime-timeline computation from StatusEvent history
     tasks.py                          Overdue sweep + inactivity reminders/deletion (plain functions)
     email_utils.py                     SMTP sending helper
+    alert_utils.py                      Slack/Discord/generic webhook senders
+    maintenance.py                       Static "under maintenance" page (see MAINTENANCE_MODE)
     routers/
       auth.py                              register/login/logout
-      account.py                            change password, delete account, metrics URL
+      account.py                            change password, alert channels, delete account
       admin.py                              account list + delete (env-gated)
       monitors.py                           dashboard, monitor CRUD + edit, uptime timeline
       ping.py                                the actual ping-receiving endpoint
       internal.py                           the two endpoints the GitHub Actions cron calls
       metrics.py                            per-account Prometheus scrape endpoint
+      status_page.py                        the public, no-auth status page
       pages.py                              /docs
     templates/                              Jinja2 HTML (landing, dashboard, docs, admin, ...)
     static/                                  CSS
@@ -120,9 +124,8 @@ backend/
 - [x] v2: uptime % history, Prometheus metrics, admin panel, account self-service
 - [x] v3: UI rebuild, input hardening, DB indexing, drop the always-on worker for a
       GitHub Actions cron
-- [ ] v4: Slack/Discord/generic webhook alerts (done), public status pages, "start"/"fail"
-      ping variants
-- [ ] v5: pricing, payments, team accounts, an API
+- [x] v4: Slack/Discord/generic webhook alerts, opt-in public status pages
+- [ ] v5: "start"/"fail" ping variants, pricing, payments, team accounts, an API
 
 ## Deployment
 
