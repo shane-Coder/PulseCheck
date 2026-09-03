@@ -109,6 +109,11 @@ task = PythonOperator(
 </div>
 
 <div class="card">
+  <h2>Slack, Discord, and generic webhooks</h2>
+  <p>Email fires on every down alert by default. Add a Slack and/or Discord incoming webhook URL — or a generic one that gets a plain JSON POST for piping into your own systems — on your <a href="/account">account settings</a> page, and the same alert goes there too. There's a "send test" button for each, so you can confirm it's wired up correctly without waiting for a real outage.</p>
+</div>
+
+<div class="card">
   <h2>FAQ</h2>
   <p><strong>My job fails partway through — will I get an alert?</strong><br>
   Yes, as long as the ping is the last line of the script. No ping means PulseCheck assumes it didn't finish.</p>
@@ -121,7 +126,6 @@ task = PythonOperator(
 <div class="card">
   <h2>What's next</h2>
   <ul>
-    <li>Slack and generic webhook alerts, alongside email</li>
     <li>"Start" and "fail" ping variants, to catch partial runs, not just missed ones</li>
     <li>Public status pages</li>
     <li>Team accounts and an API for programmatic monitor management</li>

@@ -30,6 +30,28 @@
 </div>
 
 <div class="card">
+  <h2>Alert channels</h2>
+  <p class="muted">Email always fires when a monitor goes down. Add a Slack and/or Discord incoming webhook, or a generic one for your own systems, to get the same alert there too.</p>
+  <form method="post" action="/account/webhooks">
+    <label>Slack webhook URL <span class="muted">(Slack app &rarr; Incoming Webhooks)</span>
+      <input type="url" name="slack_webhook_url" value="{{ user.slack_webhook_url or '' }}" placeholder="https://hooks.slack.com/services/...">
+    </label>
+    <label>Discord webhook URL <span class="muted">(Server Settings &rarr; Integrations &rarr; Webhooks)</span>
+      <input type="url" name="discord_webhook_url" value="{{ user.discord_webhook_url or '' }}" placeholder="https://discord.com/api/webhooks/...">
+    </label>
+    <label>Generic webhook URL <span class="muted">(gets a JSON POST, any shape you want)</span>
+      <input type="url" name="generic_webhook_url" value="{{ user.generic_webhook_url or '' }}" placeholder="https://your-system.example.com/hooks/pulsecheck">
+    </label>
+    <button type="submit">Save alert channels</button>
+  </form>
+  <div class="test-webhook-row">
+    <form method="post" action="/account/webhooks/test/slack"><button type="submit" class="secondary">Send test to Slack</button></form>
+    <form method="post" action="/account/webhooks/test/discord"><button type="submit" class="secondary">Send test to Discord</button></form>
+    <form method="post" action="/account/webhooks/test/generic"><button type="submit" class="secondary">Send test webhook</button></form>
+  </div>
+</div>
+
+<div class="card">
   <h2>Prometheus / Grafana</h2>
   <p class="muted">Scrape this URL to get your monitors' up/down state, last-ping time, and expected interval as Prometheus metrics — good for pinning them on an existing Grafana dashboard alongside everything else you already watch. It's scoped to your account only, so treat the URL as a secret, same as a ping URL.</p>
   <code class="ping-url">{{ request.base_url }}metrics/{{ user.metrics_token }}</code>

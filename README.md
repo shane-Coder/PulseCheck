@@ -26,8 +26,9 @@ of an error.
 - Uptime timeline and uptime % per monitor, computed from real status-transition history
 - Prometheus-compatible `/metrics` endpoint, scoped per account with a token, for pinning
   monitors onto an existing Grafana dashboard
+- Slack, Discord, and generic webhook alerts alongside email, with a one-click test send for each
 - Admin panel (env-var-gated) to see and manage accounts
-- Self-service account settings: change password, delete your own account
+- Self-service account settings: change password, alert channels, delete your own account
 - Rate limiting on every state-changing endpoint (auth, monitor CRUD, pings), inactivity
   reminders + auto-delete for abandoned accounts
 - Light/dark theme, public landing page + docs — no login wall on the marketing pages
@@ -119,7 +120,8 @@ backend/
 - [x] v2: uptime % history, Prometheus metrics, admin panel, account self-service
 - [x] v3: UI rebuild, input hardening, DB indexing, drop the always-on worker for a
       GitHub Actions cron
-- [ ] v4: Slack/generic webhook alerts, public status pages, "start"/"fail" ping variants
+- [ ] v4: Slack/Discord/generic webhook alerts (done), public status pages, "start"/"fail"
+      ping variants
 - [ ] v5: pricing, payments, team accounts, an API
 
 ## Deployment

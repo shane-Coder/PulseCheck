@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+from app.alert_utils import send_discord_alert, send_generic_webhook, send_slack_alert
 from app.config import settings
 from app.database import SessionLocal
 from app.email_utils import send_email
@@ -51,7 +52,7 @@ def check_overdue_monitors() -> int:
                     db.add(StatusEvent(monitor_id=monitor.id, status=MonitorStatus.DOWN, changed_at=now))
                     changed += 1
                 if not monitor.alert_sent:
-                    send_alert_email(monitor.owner.email, monitor.name)
+                    send_down_alerts(monitor)
                     monitor.alert_sent = True
             elif late_at is not None and now > late_at:
                 if monitor.status != MonitorStatus.LATE:
@@ -151,14 +152,36 @@ def check_inactive_accounts() -> dict:
     return counts
 
 
-def send_alert_email(to_email: str, monitor_name: str) -> None:
+def send_down_alerts(monitor: Monitor) -> None:
+    """Fires every alert channel the owner has configured — email always,
+    plus Slack/Discord/generic webhook if they've set one up. Each channel
+    is independently best-effort (see alert_utils), so one broken webhook
+    URL never blocks the others or the email."""
+    owner = monitor.owner
     send_email(
-        to=to_email,
-        subject=f"[PulseCheck] {monitor_name} is overdue",
+        to=owner.email,
+        subject=f"[PulseCheck] {monitor.name} is overdue",
         body=(
-            f"Monitor \"{monitor_name}\" has not checked in within its expected window.\n\n"
+            f"Monitor \"{monitor.name}\" has not checked in within its expected window.\n\n"
             "This usually means the scheduled job it's watching didn't run, or failed "
             "before it could send its ping.\n\n"
             "Log in to PulseCheck to see details."
         ),
+    )
+    send_slack_alert(
+        owner.slack_webhook_url,
+        f":red_circle: *{monitor.name}* is overdue — no ping received within its expected window.",
+    )
+    send_discord_alert(
+        owner.discord_webhook_url,
+        f"🔴 **{monitor.name}** is overdue — no ping received within its expected window.",
+    )
+    send_generic_webhook(
+        owner.generic_webhook_url,
+        {
+            "event": "monitor.down",
+            "monitor_id": monitor.id,
+            "monitor_name": monitor.name,
+            "status": "down",
+        },
     )

@@ -1,15 +1,18 @@
-from fastapi import APIRouter, Depends, Form, Request, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.alert_utils import send_discord_alert, send_generic_webhook, send_slack_alert
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import User
+from app.rate_limit import limiter
 from app.security import hash_password, verify_password
 from app.templating import templates
 
 router = APIRouter(prefix="/account", tags=["account"])
 COOKIE_NAME = "access_token"
+MAX_WEBHOOK_URL_LENGTH = 500
 
 
 @router.get("")
@@ -68,6 +71,80 @@ def change_password(
     return templates.TemplateResponse(
         "account.html",
         {"request": request, "user": user, "error": None, "success": "Password updated."},
+    )
+
+
+@router.post("/webhooks")
+@limiter.limit("10/minute")
+def update_webhooks(
+    request: Request,
+    slack_webhook_url: str = Form(""),
+    discord_webhook_url: str = Form(""),
+    generic_webhook_url: str = Form(""),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    urls = {
+        "slack_webhook_url": slack_webhook_url.strip(),
+        "discord_webhook_url": discord_webhook_url.strip(),
+        "generic_webhook_url": generic_webhook_url.strip(),
+    }
+    for value in urls.values():
+        if value and not value.startswith("https://"):
+            return templates.TemplateResponse(
+                "account.html",
+                {"request": request, "user": user, "error": "Webhook URLs must start with https://", "success": None},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(value) > MAX_WEBHOOK_URL_LENGTH:
+            return templates.TemplateResponse(
+                "account.html",
+                {"request": request, "user": user, "error": "That webhook URL is too long.", "success": None},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+    user.slack_webhook_url = urls["slack_webhook_url"]
+    user.discord_webhook_url = urls["discord_webhook_url"]
+    user.generic_webhook_url = urls["generic_webhook_url"]
+    db.commit()
+    return templates.TemplateResponse(
+        "account.html",
+        {"request": request, "user": user, "error": None, "success": "Alert channels updated."},
+    )
+
+
+@router.post("/webhooks/test/{channel}")
+@limiter.limit("10/minute")
+def test_webhook(
+    request: Request,
+    channel: str,
+    user: User = Depends(get_current_user),
+):
+    senders = {
+        "slack": (user.slack_webhook_url, send_slack_alert, "PulseCheck test alert — if you can see this, Slack is wired up correctly."),
+        "discord": (user.discord_webhook_url, send_discord_alert, "PulseCheck test alert — if you can see this, Discord is wired up correctly."),
+    }
+    if channel == "generic":
+        url = user.generic_webhook_url
+        if not url:
+            raise HTTPException(status_code=400, detail="Save a generic webhook URL first.")
+        send_generic_webhook(url, {"event": "test", "message": "PulseCheck test alert"})
+    elif channel in senders:
+        url, sender, text = senders[channel]
+        if not url:
+            raise HTTPException(status_code=400, detail=f"Save a {channel} webhook URL first.")
+        sender(url, text)
+    else:
+        raise HTTPException(status_code=404, detail="Unknown channel")
+
+    return templates.TemplateResponse(
+        "account.html",
+        {
+            "request": request,
+            "user": user,
+            "error": None,
+            "success": f"Test alert sent to {channel} — check the channel for it (each send is best-effort, so no error here doesn't guarantee delivery).",
+        },
     )
 
 

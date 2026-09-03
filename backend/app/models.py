@@ -48,6 +48,14 @@ class User(Base):
         String(36), unique=True, index=True, default=lambda: str(uuid.uuid4())
     )
 
+    # Alert channels beyond email, all optional. One set per account rather
+    # than per monitor — simplest model for now, and matches how
+    # metrics_token already works (account-scoped, not monitor-scoped). All
+    # three fire together on the same DOWN transition the alert email does.
+    slack_webhook_url: Mapped[str] = mapped_column(String(500), default="")
+    discord_webhook_url: Mapped[str] = mapped_column(String(500), default="")
+    generic_webhook_url: Mapped[str] = mapped_column(String(500), default="")
+
     monitors: Mapped[list["Monitor"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
 
 
