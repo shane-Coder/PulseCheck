@@ -33,7 +33,7 @@ def _send_verification_email(email: str) -> None:
 
 @router.get("/register")
 def register_form(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request, "error": None})
+    return templates.TemplateResponse("register.html", {"request": request, "error": None, "sent": False})
 
 
 @router.post("/register")
@@ -90,8 +90,15 @@ def register(
 
     _send_verification_email(user.email)
 
+    # Logged in immediately (cookie set below) — verification isn't a
+    # gate, just a nudge. This screen is only about the sequence: show
+    # "check your email" as the direct result of signing up, instead of
+    # silently dropping them into the dashboard and hoping they notice a
+    # banner. "Continue to dashboard" on this page takes them in either way.
     token = create_access_token(subject=user.email)
-    response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    response = templates.TemplateResponse(
+        "register.html", {"request": request, "error": None, "sent": True, "email": user.email}
+    )
     response.set_cookie(COOKIE_NAME, token, httponly=True, samesite="lax")
     return response
 

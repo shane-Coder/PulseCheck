@@ -11,6 +11,11 @@
   </ul>
 </div>
 <div class="card narrow">
+  {% if sent %}
+  <h1>Check your email</h1>
+  <p class="muted">Your account is ready. We sent a verification link to <strong>{{ email }}</strong> — click it to confirm this is really your address.</p>
+  <p><a href="/">Continue to dashboard &rarr;</a></p>
+  {% else %}
   <h1>Create your account</h1>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <form method="post" action="/register">
@@ -23,5 +28,6 @@
     <button type="submit">Sign up</button>
   </form>
   <p class="muted">Already have an account? <a href="/login">Log in</a></p>
+  {% endif %}
 </div>
 {% endblock %}

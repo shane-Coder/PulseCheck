@@ -11,6 +11,7 @@
   <thead>
     <tr>
       <th>Email</th>
+      <th>Verify-account</th>
       <th>Signed up</th>
       <th>Monitors</th>
       <th></th>
@@ -23,6 +24,10 @@
         {{ u.email }}
         {% if u.display_name %}<span class="muted">({{ u.display_name }})</span>{% endif %}
         {% if is_admin_email(u.email) %}<span class="badge badge-neutral">admin</span>{% endif %}
+      </td>
+      <td>
+        {% if u.email_verified %}<span class="badge status-up">verified</span>
+        {% else %}<span class="badge status-late">unverified</span>{% endif %}
       </td>
       <td>{{ u.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</td>
       <td>{{ monitor_count }}</td>
