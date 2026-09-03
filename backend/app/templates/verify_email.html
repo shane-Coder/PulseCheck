@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Verify email · PulseCheck{% endblock %}
+{% block content %}
+<div class="card narrow">
+  {% if success %}
+  <h1>Email verified</h1>
+  <p class="muted">That's confirmed — you're all set.</p>
+  {% else %}
+  <h1>Link expired</h1>
+  <p class="muted">This verification link is invalid or has expired. You can request a new one from your account settings.</p>
+  {% endif %}
+  <p><a href="/">Back to dashboard</a></p>
+</div>
+{% endblock %}

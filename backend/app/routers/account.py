@@ -3,11 +3,13 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.alert_utils import send_discord_alert, send_generic_webhook, send_slack_alert
+from app.config import settings
 from app.database import get_db
 from app.deps import get_current_user
+from app.email_utils import send_email
 from app.models import User
 from app.rate_limit import limiter
-from app.security import hash_password, verify_password
+from app.security import create_purpose_token, hash_password, verify_password
 from app.templating import templates
 
 router = APIRouter(prefix="/account", tags=["account"])
@@ -71,6 +73,27 @@ def change_password(
     return templates.TemplateResponse(
         "account.html",
         {"request": request, "user": user, "error": None, "success": "Password updated."},
+    )
+
+
+@router.post("/resend-verification")
+@limiter.limit("5/hour")
+def resend_verification(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if not user.email_verified:
+        token = create_purpose_token(user.email, "verify", 60 * 24)
+        verify_url = f"{settings.base_url}verify-email/{token}"
+        send_email(
+            to=user.email,
+            subject="[PulseCheck] Verify your email",
+            body=f"Confirm this is your email address: {verify_url}\n\nThis link expires in 24 hours.",
+        )
+    return templates.TemplateResponse(
+        "account.html",
+        {"request": request, "user": user, "error": None, "success": "Verification email sent — check your inbox."},
     )
 
 

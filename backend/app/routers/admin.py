@@ -9,24 +9,40 @@ from app.models import Monitor, User
 from app.templating import templates, is_admin_email
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+PAGE_SIZE = 25
 
 
 @router.get("")
 def admin_home(
     request: Request,
+    page: int = 1,
     db: Session = Depends(get_db),
     admin: User = Depends(get_current_admin_user),
 ):
+    page = max(page, 1)
+    total = db.query(func.count(User.id)).scalar()
+    total_pages = max((total + PAGE_SIZE - 1) // PAGE_SIZE, 1)
+    page = min(page, total_pages)
+
     rows = (
         db.query(User, func.count(Monitor.id).label("monitor_count"))
         .outerjoin(Monitor, Monitor.owner_id == User.id)
         .group_by(User.id)
         .order_by(User.created_at.desc())
+        .limit(PAGE_SIZE)
+        .offset((page - 1) * PAGE_SIZE)
         .all()
     )
     return templates.TemplateResponse(
         "admin.html",
-        {"request": request, "user": admin, "rows": rows},
+        {
+            "request": request,
+            "user": admin,
+            "rows": rows,
+            "total": total,
+            "page": page,
+            "total_pages": total_pages,
+        },
     )
 
 

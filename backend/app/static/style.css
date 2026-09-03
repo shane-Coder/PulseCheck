@@ -639,6 +639,18 @@ button.secondary:hover { background: var(--surface-2); }
 
 .table-scroll { overflow-x: auto; }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.pagination a { color: var(--accent-strong); text-decoration: none; font-weight: 500; }
+.pagination a:hover { text-decoration: underline; }
+
 .monitor-table {
   width: 100%;
   border-collapse: collapse;
@@ -766,6 +778,22 @@ pre {
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
+
+.verify-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--late-bg);
+  border: 1px solid var(--late);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.verify-banner form { flex-shrink: 0; }
 
 .onboarding-guide {
   border-color: var(--accent);

@@ -4,7 +4,7 @@
 <div class="header-row">
   <h1>Admin</h1>
 </div>
-<p class="muted">{{ rows|length }} account{{ "s" if rows|length != 1 else "" }} total.</p>
+<p class="muted">{{ total }} account{{ "s" if total != 1 else "" }} total{% if total_pages > 1 %}, page {{ page }} of {{ total_pages }}{% endif %}.</p>
 
 <div class="table-scroll">
 <table class="monitor-table">
@@ -40,4 +40,12 @@
   </tbody>
 </table>
 </div>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+  {% if page > 1 %}<a href="/admin?page={{ page - 1 }}">&larr; Newer</a>{% endif %}
+  <span class="muted">Page {{ page }} of {{ total_pages }}</span>
+  {% if page < total_pages %}<a href="/admin?page={{ page + 1 }}">Older &rarr;</a>{% endif %}
+</div>
+{% endif %}
 {% endblock %}

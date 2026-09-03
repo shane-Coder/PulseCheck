@@ -2,15 +2,33 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
+from app.email_utils import send_email
 from app.models import User, utcnow
 from app.rate_limit import limiter
-from app.security import create_access_token, hash_password, verify_password
+from app.security import create_access_token, create_purpose_token, decode_purpose_token, hash_password, verify_password
 from app.templating import templates
 
 router = APIRouter(tags=["auth"])
 
 COOKIE_NAME = "access_token"
+RESET_TOKEN_MINUTES = 30
+VERIFY_TOKEN_MINUTES = 60 * 24
+
+
+def _send_verification_email(email: str) -> None:
+    token = create_purpose_token(email, "verify", VERIFY_TOKEN_MINUTES)
+    verify_url = f"{settings.base_url}verify-email/{token}"
+    send_email(
+        to=email,
+        subject="[PulseCheck] Verify your email",
+        body=(
+            f"Confirm this is your email address: {verify_url}\n\n"
+            f"This link expires in 24 hours. If you didn't create a PulseCheck account, "
+            "you can ignore this."
+        ),
+    )
 
 
 @router.get("/register")
@@ -70,6 +88,8 @@ def register(
     db.add(user)
     db.commit()
 
+    _send_verification_email(user.email)
+
     token = create_access_token(subject=user.email)
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     response.set_cookie(COOKIE_NAME, token, httponly=True, samesite="lax")
@@ -77,8 +97,9 @@ def register(
 
 
 @router.get("/login")
-def login_form(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+def login_form(request: Request, reset: str | None = None):
+    success = "Password reset — log in with your new password." if reset == "success" else None
+    return templates.TemplateResponse("login.html", {"request": request, "error": None, "success": success})
 
 
 @router.post("/login")
@@ -113,3 +134,101 @@ def logout():
     response = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     response.delete_cookie(COOKIE_NAME)
     return response
+
+
+@router.get("/forgot-password")
+def forgot_password_form(request: Request):
+    return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": False})
+
+
+@router.post("/forgot-password")
+@limiter.limit("5/hour")
+def forgot_password(
+    request: Request,
+    email: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    email = email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+    if user is not None:
+        token = create_purpose_token(user.email, "reset", RESET_TOKEN_MINUTES)
+        reset_url = f"{settings.base_url}reset-password/{token}"
+        send_email(
+            to=user.email,
+            subject="[PulseCheck] Reset your password",
+            body=(
+                f"Someone (hopefully you) asked to reset the password on this account.\n\n"
+                f"Reset it here: {reset_url}\n\n"
+                f"This link expires in {RESET_TOKEN_MINUTES} minutes. If you didn't ask for "
+                "this, ignore it — your password hasn't changed."
+            ),
+        )
+    # Same response whether or not that email exists — the alternative
+    # ("no account with that email") lets anyone check which emails are
+    # registered just by trying them here.
+    return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": True})
+
+
+@router.get("/reset-password/{token}")
+def reset_password_form(token: str, request: Request):
+    email = decode_purpose_token(token, "reset")
+    return templates.TemplateResponse(
+        "reset_password.html", {"request": request, "token": token, "invalid": email is None, "error": None}
+    )
+
+
+@router.post("/reset-password/{token}")
+@limiter.limit("10/hour")
+def reset_password(
+    token: str,
+    request: Request,
+    new_password: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    email = decode_purpose_token(token, "reset")
+    if email is None:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "token": token, "invalid": True, "error": None},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if len(new_password) < 8:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "token": token, "invalid": False, "error": "Password must be at least 8 characters."},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    if len(new_password.encode("utf-8")) > 72:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "token": token, "invalid": False, "error": "Password must be 72 characters or fewer."},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        # Account was deleted after the link was sent — treat like an
+        # invalid link rather than a 500.
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "token": token, "invalid": True, "error": None},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user.hashed_password = hash_password(new_password)
+    db.commit()
+    return RedirectResponse(url="/login?reset=success", status_code=status.HTTP_302_FOUND)
+
+
+@router.get("/verify-email/{token}")
+def verify_email(token: str, request: Request, db: Session = Depends(get_db)):
+    email = decode_purpose_token(token, "verify")
+    success = False
+    if email is not None:
+        user = db.query(User).filter(User.email == email).first()
+        if user is not None:
+            user.email_verified = True
+            db.commit()
+            success = True
+    return templates.TemplateResponse("verify_email.html", {"request": request, "success": success})

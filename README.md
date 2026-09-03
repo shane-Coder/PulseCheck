@@ -28,8 +28,9 @@ of an error.
   monitors onto an existing Grafana dashboard
 - Slack, Discord, and generic webhook alerts alongside email, with a one-click test send for each
 - Opt-in public status pages — one shareable link per account, per-monitor toggle, name/status/uptime only
-- Admin panel (env-var-gated) to see and manage accounts
+- Admin panel (env-var-gated, paginated) to see and manage accounts
 - Self-service account settings: change password, alert channels, delete your own account
+- Forgot-password email reset flow, and email verification with a resend option
 - Rate limiting on every state-changing endpoint (auth, monitor CRUD, pings), inactivity
   reminders + auto-delete for abandoned accounts
 - Light/dark theme, public landing page + docs — no login wall on the marketing pages

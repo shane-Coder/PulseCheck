@@ -26,6 +26,12 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Not enforced anywhere yet — an unverified account can do everything a
+    # verified one can. This exists so we can at least tell someone their
+    # email might be wrong (a real gap: right now anyone can register with
+    # an email that isn't theirs) and nudge them to confirm it, without
+    # locking anyone out while this is new.
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     # Shown in the nav instead of the raw email — no product should put your
     # bare email address in the UI chrome everywhere. Falls back to email
     # wherever this is unset (see is_admin_email usage sites and templates).

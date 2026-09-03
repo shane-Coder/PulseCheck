@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Dashboard · PulseCheck{% endblock %}
 {% block content %}
+{% if not user.email_verified %}
+<div class="verify-banner">
+  <span>Verify your email so you don't miss an alert — we sent a link to <strong>{{ user.email }}</strong>.</span>
+  <form method="post" action="/account/resend-verification">
+    <button type="submit" class="link-button">Resend</button>
+  </form>
+</div>
+{% endif %}
+
 <div class="header-row">
   <h1>Your monitors</h1>
 </div>
