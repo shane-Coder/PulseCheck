@@ -32,32 +32,33 @@
 </div>
 {% endif %}
 
-<details class="card intro-panel" id="intro-panel" open>
-  <summary>What is PulseCheck, and how do I use it?</summary>
+{% if not monitors %}
+<div class="card onboarding-guide">
+  <h2>Get your first monitor running</h2>
+  <ol class="onboarding-steps">
+    <li><strong>Create a monitor below.</strong> Pick a use case, or set your own name and interval.</li>
+    <li><strong>Copy its ping URL</strong> from the monitor's page once it's created.</li>
+    <li><strong>Add one line to your job:</strong> <code>curl -fsS &lt;your-link&gt;</code>, run only on success.</li>
+  </ol>
+  <p class="muted">That's it — PulseCheck emails you (and Slack/Discord/webhook, if you set those up) the moment a ping doesn't arrive on schedule.</p>
+</div>
+{% endif %}
 
-  <h3>In plain English</h3>
-  <p class="muted">Think of it like a heartbeat monitor — but for your automated tasks instead of a person. Every time your script or backup job finishes, it sends a tiny "I'm alive" signal. If that signal doesn't show up when it's supposed to, PulseCheck taps you on the shoulder and says "hey, something didn't run."</p>
-
-  <h3>How to use it</h3>
-  <p class="muted">Create a monitor above, copy its link from the monitor's detail page, and add one line to the end of your job: <code>curl -fsS &lt;your-link&gt;</code>. That's the entire setup.</p>
-
-  <h3>Why you'd want this</h3>
-  <p class="muted">Most monitoring tools watch things that are already running. Nothing watches for a job that never started, or a script that crashed before finishing — that's the gap PulseCheck fills.</p>
-
-  <h3>How it's different from other tools</h3>
-  <p class="muted">Same core idea as Healthchecks.io or Cronitor (both bigger, paid platforms) — self-hostable and fully open here, so you can read every line of what happens to your data. It doesn't replace Prometheus/Grafana, it complements them: they watch live services, PulseCheck watches jobs that only run occasionally.</p>
-
-  <p><a href="/docs">Full technical docs, integration examples (cron, Docker, Kubernetes, CI, systemd), and roadmap →</a></p>
+<details class="card intro-panel" id="intro-panel" {% if not monitors %}open{% endif %}>
+  <summary>What is PulseCheck, exactly?</summary>
+  <p class="muted">A heartbeat monitor for automated tasks instead of a person. Your job pings PulseCheck when it finishes; if that ping goes quiet, you get alerted — before you find out the hard way, days later.</p>
+  <p class="muted">Same idea as Healthchecks.io or Cronitor, self-hostable and open here. It doesn't replace Prometheus/Grafana — they watch live services, this watches jobs that only run occasionally.</p>
+  <p><a href="/docs">Full docs, integration examples, and the roadmap &rarr;</a></p>
 </details>
 
 <div class="card">
   <h2>New monitor</h2>
   <p class="muted">Not sure what to set? Start from a use case:</p>
   <div class="template-row">
-    <button type="button" class="template-btn" data-name="nightly-backup" data-period="86400" data-grace="3600">Nightly backup</button>
-    <button type="button" class="template-btn" data-name="weekly-report" data-period="604800" data-grace="7200">Weekly report</button>
-    <button type="button" class="template-btn" data-name="hourly-sync" data-period="3600" data-grace="600">Hourly sync job</button>
-    <button type="button" class="template-btn" data-name="service-health" data-period="300" data-grace="60">Service health check</button>
+    <button type="button" class="template-btn" data-name="nightly-backup" data-period="86400" data-grace="3600" title="Every 24h, 1h grace">Nightly backup</button>
+    <button type="button" class="template-btn" data-name="weekly-report" data-period="604800" data-grace="7200" title="Every 7 days, 2h grace">Weekly report</button>
+    <button type="button" class="template-btn" data-name="hourly-sync" data-period="3600" data-grace="600" title="Every 1h, 10m grace">Hourly sync job</button>
+    <button type="button" class="template-btn" data-name="service-health" data-period="300" data-grace="60" title="Every 5m, 1m grace">Service health check</button>
   </div>
   <form method="post" action="/monitors" class="inline-form" id="new-monitor-form">
     <label>Name
@@ -108,8 +109,6 @@
   </tbody>
 </table>
 </div>
-{% else %}
-<p class="muted">No monitors yet — create one above to get a ping URL.</p>
 {% endif %}
 
 <script>

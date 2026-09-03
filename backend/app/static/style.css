@@ -767,6 +767,25 @@ pre {
   letter-spacing: 0.02em;
 }
 
+.onboarding-guide {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.onboarding-guide h2 { margin-bottom: 1rem; }
+
+.onboarding-steps {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+}
+
+.onboarding-steps li {
+  margin-bottom: 0.6rem;
+  color: var(--ink);
+}
+
+.onboarding-steps li:last-child { margin-bottom: 0; }
+
 .intro-panel {
   margin-bottom: 1.5rem;
 }
