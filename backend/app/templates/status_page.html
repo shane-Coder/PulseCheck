@@ -15,7 +15,7 @@
     <span class="badge status-{{ m.status.value }}">{{ m.status.value }}</span>
     <span class="uptime-pct" style="margin-left: auto;">{{ timeline.uptime_pct }}%</span>
   </div>
-  <p class="muted">Since {{ timeline.window_start.strftime("%Y-%m-%d") }} ({{ (timeline.window_end - timeline.window_start).days }} day window)</p>
+  <p class="muted">Since {{ render_time(timeline.window_start, "date") }} ({{ (timeline.window_end - timeline.window_start).days }} day window)</p>
   <div class="timeline-bar">
     {% for seg in timeline.segments %}
     <div class="timeline-segment status-fill-{{ seg.status }}"

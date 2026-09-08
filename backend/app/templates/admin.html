@@ -29,7 +29,7 @@
         {% if u.email_verified %}<span class="badge status-up">verified</span>
         {% else %}<span class="badge status-late">unverified</span>{% endif %}
       </td>
-      <td>{{ u.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</td>
+      <td>{{ render_time(u.created_at) }}</td>
       <td>{{ monitor_count }}</td>
       <td>
         {% if not is_admin_email(u.email) %}

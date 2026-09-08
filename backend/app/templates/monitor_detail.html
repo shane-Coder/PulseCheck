@@ -11,7 +11,7 @@
 <p class="meta-row">
   Checks in every <strong>{{ monitor.period_seconds }}s</strong> (+{{ monitor.grace_seconds }}s grace)
   <span class="meta-sep">&middot;</span>
-  Last ping <strong>{{ monitor.last_ping_at.strftime("%Y-%m-%d %H:%M UTC") if monitor.last_ping_at else "never" }}</strong>
+  Last ping <strong>{{ render_time(monitor.last_ping_at) }}</strong>
   <span class="meta-sep">&middot;</span>
   Marked <span class="status-late-text">late</span> after {{ monitor.period_seconds }}s of silence, <span class="status-down-text">down</span> after {{ monitor.period_seconds + monitor.grace_seconds }}s
 </p>
@@ -36,7 +36,7 @@
     <h2>Uptime</h2>
     <span class="uptime-pct">{{ timeline.uptime_pct }}%</span>
   </div>
-  <p class="muted">Since {{ timeline.window_start.strftime("%Y-%m-%d") }} ({{ (timeline.window_end - timeline.window_start).days }} day window)</p>
+  <p class="muted">Since {{ render_time(timeline.window_start, "date") }} ({{ (timeline.window_end - timeline.window_start).days }} day window)</p>
   <div class="timeline-bar">
     {% for seg in timeline.segments %}
     <div class="timeline-segment status-fill-{{ seg.status }}"
@@ -65,7 +65,7 @@
   {% if recent_pings %}
   <ul class="ping-list">
     {% for p in recent_pings %}
-    <li>{{ p.received_at.strftime("%Y-%m-%d %H:%M:%S UTC") }} {% if p.source_ip %}<span class="muted">from {{ p.source_ip }}</span>{% endif %}</li>
+    <li>{{ render_time(p.received_at) }} {% if p.source_ip %}<span class="muted">from {{ p.source_ip }}</span>{% endif %}</li>
     {% endfor %}
   </ul>
   {% else %}

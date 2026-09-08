@@ -219,6 +219,28 @@ h1, h2, h3 { text-wrap: balance; }
   word-break: break-all;
 }
 
+.sidebar-credit {
+  padding: 0.85rem 0.5rem 0;
+  margin-top: 0.85rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.76rem;
+}
+
+.sidebar-credit .muted { font-size: 0.76rem; }
+
+.credit-links {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 0.3rem;
+}
+
+.credit-links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.credit-links a:hover { color: var(--accent-strong); }
+
 .theme-toggle {
   background: none;
   border: 1px solid var(--line);
@@ -247,6 +269,12 @@ h1, h2, h3 { text-wrap: balance; }
      overridden by their ancestor's width. */
   min-width: 0;
   max-width: 920px;
+  /* Without this, the leftover space on a wide screen (this column is
+     capped at 920px for readability, same as GitHub/Linear/Notion) all
+     piles up on the right, which reads as unfinished rather than
+     intentional. Auto margins on a flex item absorb exactly that leftover
+     space evenly on both sides — a flexbox behavior, not a hack. */
+  margin: 0 auto;
   padding: 2.25rem 2rem;
 }
 
@@ -281,6 +309,7 @@ h1, h2, h3 { text-wrap: balance; }
   }
   .sidebar-footer { flex-direction: row; margin-top: 0; padding: 0; }
   .sidebar-user { display: none; }
+  .sidebar-credit { display: none; }
   .app-main { padding: 1.5rem 1rem; }
 }
 

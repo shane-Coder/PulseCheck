@@ -4,7 +4,7 @@ from app.alert_utils import send_discord_alert, send_generic_webhook, send_slack
 from app.config import settings
 from app.database import SessionLocal
 from app.email_utils import send_email
-from app.models import Monitor, MonitorStatus, StatusEvent, User
+from app.models import Monitor, MonitorStatus, StatusEvent, User, as_utc
 
 # These used to be Celery tasks, run by a worker process that stayed up
 # 24/7 polling Redis for a beat schedule — most of that machine's cost for
@@ -38,8 +38,9 @@ def check_overdue_monitors() -> int:
         for monitor in candidates:
             if monitor.last_ping_at is None:
                 # Never pinged — baseline off creation instead of a ping.
-                late_at = monitor.created_at + timedelta(seconds=monitor.period_seconds)
-                down_at = monitor.created_at + timedelta(
+                created_at = as_utc(monitor.created_at)
+                late_at = created_at + timedelta(seconds=monitor.period_seconds)
+                down_at = created_at + timedelta(
                     seconds=monitor.period_seconds + monitor.grace_seconds
                 )
             else:
@@ -91,10 +92,10 @@ def check_inactive_accounts() -> dict:
             if user.email.lower() in settings.admin_emails_set:
                 continue
 
-            last_activity = user.last_login_at or user.created_at
+            last_activity = as_utc(user.last_login_at or user.created_at)
             for monitor in user.monitors:
-                if monitor.last_ping_at and monitor.last_ping_at > last_activity:
-                    last_activity = monitor.last_ping_at
+                if monitor.last_ping_at and as_utc(monitor.last_ping_at) > last_activity:
+                    last_activity = as_utc(monitor.last_ping_at)
 
             days_inactive = (now - last_activity).days
 

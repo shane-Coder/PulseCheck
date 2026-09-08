@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from app.models import Monitor, MonitorStatus
+from app.models import Monitor, MonitorStatus, as_utc
 
 WINDOW_DAYS = 30
 
@@ -15,16 +15,16 @@ def build_uptime_timeline(monitor: Monitor) -> dict:
     history yet — they'll show one segment for their current status until
     real transitions start accumulating."""
     now = datetime.now(timezone.utc)
-    window_start = max(monitor.created_at, now - timedelta(days=WINDOW_DAYS))
+    window_start = max(as_utc(monitor.created_at), now - timedelta(days=WINDOW_DAYS))
     window_end = now
 
-    events = sorted(monitor.status_events, key=lambda e: e.changed_at)
-    prior = [e for e in events if e.changed_at < window_start]
-    in_window = [e for e in events if window_start <= e.changed_at <= window_end]
+    events = sorted(monitor.status_events, key=lambda e: as_utc(e.changed_at))
+    prior = [e for e in events if as_utc(e.changed_at) < window_start]
+    in_window = [e for e in events if window_start <= as_utc(e.changed_at) <= window_end]
 
     start_status = prior[-1].status if prior else (in_window[0].status if in_window else monitor.status)
 
-    boundaries = [window_start] + [e.changed_at for e in in_window] + [window_end]
+    boundaries = [window_start] + [as_utc(e.changed_at) for e in in_window] + [window_end]
     statuses = [start_status] + [e.status for e in in_window]
 
     total_seconds = (window_end - window_start).total_seconds()

@@ -34,6 +34,13 @@
           <button class="link-button" type="submit">Log out</button>
         </form>
       </div>
+      <div class="sidebar-credit">
+        <span class="muted">Built by Shivam</span>
+        <div class="credit-links">
+          <a href="https://github.com/shane-Coder" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://shivam-portfolio-gold-omega.vercel.app" target="_blank" rel="noopener">Portfolio</a>
+        </div>
+      </div>
     </aside>
     <main class="app-main">
 {% else %}
@@ -71,6 +78,24 @@
       btn.textContent = current() === "light" ? "🌙" : "☀️";
       btn.addEventListener("click", function () {
         apply(current() === "light" ? "dark" : "light");
+      });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      // Every <time> element carries the real UTC value in its datetime
+      // attribute (see render_time() in templating.py) and starts out
+      // showing that UTC text as a no-JS fallback. This swaps it for
+      // whatever timezone the *viewer's own browser* is set to — correct
+      // for anyone anywhere, not just IST, since the conversion happens
+      // client-side per viewer rather than being picked once on the server.
+      document.querySelectorAll("time[data-local-time]").forEach(function (el) {
+        var d = new Date(el.getAttribute("datetime"));
+        if (isNaN(d.getTime())) return;
+        el.textContent = el.dataset.localTime === "date"
+          ? d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+          : d.toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
       });
     })();
   </script>

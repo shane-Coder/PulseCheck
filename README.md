@@ -87,6 +87,21 @@ Actions, systemd, Airflow) and how this fits next to Prometheus/Grafana.
 are logged instead of sent — fine for local dev, but you'll want a real provider (Brevo,
 SendGrid, etc.) for anything beyond that.
 
+### Running tests
+
+No Docker or Postgres needed for these — they run against an in-memory SQLite DB and a
+`memory://` rate-limit store, so they're fast and fully isolated from anything else running
+locally:
+
+```bash
+cd backend
+python -m venv .venv && .venv/Scripts/activate   # .venv/bin/activate on macOS/Linux
+pip install -r requirements-dev.txt
+pytest
+```
+
+Runs automatically on every push via [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
 ## Project layout
 
 ```
@@ -117,6 +132,9 @@ backend/
       pages.py                              /docs
     templates/                              Jinja2 HTML (landing, dashboard, docs, admin, ...)
     static/                                  CSS
+  tests/                                   pytest suite — auth, monitors, account, admin, alert-firing
+  pytest.ini
+  requirements-dev.txt                    pytest + httpx, not in the production image
 ```
 
 ## Roadmap

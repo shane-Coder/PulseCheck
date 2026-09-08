@@ -12,6 +12,16 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def as_utc(dt: datetime) -> datetime:
+    """DateTime(timezone=True) columns come back tz-aware from Postgres —
+    the only DB this app ever runs against in production — but SQLite
+    (used by the test suite for speed) drops tzinfo entirely, so the exact
+    same column read comes back naive there. Every arithmetic/comparison
+    site that mixes a stored datetime with datetime.now(timezone.utc)
+    needs this, or it works everywhere except under SQLite."""
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+
+
 class MonitorStatus(str, enum.Enum):
     NEW = "new"        # created, never pinged yet
     UP = "up"          # pinged within the expected window
@@ -127,7 +137,7 @@ class Monitor(Base):
         if self.last_ping_at is None:
             return None
         from datetime import timedelta
-        return self.last_ping_at + timedelta(seconds=self.period_seconds)
+        return as_utc(self.last_ping_at) + timedelta(seconds=self.period_seconds)
 
     @property
     def deadline(self) -> datetime | None:
@@ -136,7 +146,7 @@ class Monitor(Base):
         if self.last_ping_at is None:
             return None
         from datetime import timedelta
-        return self.last_ping_at + timedelta(seconds=self.period_seconds + self.grace_seconds)
+        return as_utc(self.last_ping_at) + timedelta(seconds=self.period_seconds + self.grace_seconds)
 
 
 class PingEvent(Base):

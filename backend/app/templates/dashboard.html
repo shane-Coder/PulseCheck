@@ -103,7 +103,7 @@
         {% for tag in m.tag_list %}<span class="tag-pill">{{ tag }}</span>{% endfor %}
       </td>
       <td><span class="badge status-{{ m.status.value }}">{{ m.status.value }}</span></td>
-      <td class="mono">{{ m.last_ping_at.strftime("%Y-%m-%d %H:%M UTC") if m.last_ping_at else "never" }}</td>
+      <td class="mono">{{ render_time(m.last_ping_at) }}</td>
       <td class="mono">{{ m.period_seconds }}s (+{{ m.grace_seconds }}s grace)</td>
       <td>
         <form method="post" action="/monitors/{{ m.id }}/pause" style="display:inline">
