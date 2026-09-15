@@ -7,14 +7,33 @@ from app.database import get_db
 from app.email_utils import send_email
 from app.models import User, utcnow
 from app.rate_limit import limiter
-from app.security import create_access_token, create_purpose_token, decode_purpose_token, hash_password, verify_password
+from app.security import (
+    create_access_token,
+    create_purpose_token,
+    decode_purpose_token,
+    generate_csrf_token,
+    hash_password,
+    verify_password,
+)
 from app.templating import templates
 
 router = APIRouter(tags=["auth"])
 
 COOKIE_NAME = "access_token"
+CSRF_COOKIE_NAME = "csrf_token"
 RESET_TOKEN_MINUTES = 30
 VERIFY_TOKEN_MINUTES = 60 * 24
+
+
+def _set_auth_cookies(response, email: str) -> None:
+    """The two cookies a logged-in session needs: the JWT that proves who
+    you are, and a separate random value the CSRF middleware (main.py)
+    checks against a hidden form field on every state-changing request.
+    httponly on both — the CSRF cookie doesn't need JS to read it, since
+    the server embeds its value into forms itself (see csrf_field() in
+    templating.py), so there's no reason to expose it to script at all."""
+    response.set_cookie(COOKIE_NAME, create_access_token(subject=email), httponly=True, samesite="lax")
+    response.set_cookie(CSRF_COOKIE_NAME, generate_csrf_token(), httponly=True, samesite="lax")
 
 
 def _send_verification_email(email: str) -> None:
@@ -95,11 +114,10 @@ def register(
     # "check your email" as the direct result of signing up, instead of
     # silently dropping them into the dashboard and hoping they notice a
     # banner. "Continue to dashboard" on this page takes them in either way.
-    token = create_access_token(subject=user.email)
     response = templates.TemplateResponse(
         "register.html", {"request": request, "error": None, "sent": True, "email": user.email}
     )
-    response.set_cookie(COOKIE_NAME, token, httponly=True, samesite="lax")
+    _set_auth_cookies(response, user.email)
     return response
 
 
@@ -130,9 +148,8 @@ def login(
     user.inactivity_reminder_stage = 0
     db.commit()
 
-    token = create_access_token(subject=user.email)
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
-    response.set_cookie(COOKIE_NAME, token, httponly=True, samesite="lax")
+    _set_auth_cookies(response, user.email)
     return response
 
 
@@ -140,6 +157,7 @@ def login(
 def logout():
     response = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     response.delete_cookie(COOKIE_NAME)
+    response.delete_cookie(CSRF_COOKIE_NAME)
     return response
 
 

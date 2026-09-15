@@ -28,5 +28,15 @@ def render_time(dt, mode: str = "datetime") -> Markup:
     return Markup(f'<time datetime="{escape(dt.isoformat())}" data-local-time="{mode}">{escape(fallback)}</time>')
 
 
+def csrf_field(request) -> Markup:
+    """Every protected form needs this hidden field — its value has to
+    match the csrf_token cookie main.py's middleware checks against. Reads
+    straight off the request's cookies rather than needing each route to
+    thread a token through its own template context."""
+    token = request.cookies.get("csrf_token", "")
+    return Markup(f'<input type="hidden" name="csrf_token" value="{escape(token)}">')
+
+
 templates.env.globals["is_admin_email"] = is_admin_email
 templates.env.globals["render_time"] = render_time
+templates.env.globals["csrf_field"] = csrf_field

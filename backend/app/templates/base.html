@@ -31,6 +31,7 @@
         <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark theme">☀️</button>
         <span class="muted sidebar-user">{{ user.display_name or user.email }}</span>
         <form method="post" action="/logout">
+          {{ csrf_field(request) }}
           <button class="link-button" type="submit">Log out</button>
         </form>
       </div>

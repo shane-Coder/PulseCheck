@@ -82,7 +82,24 @@ def _reset_rate_limits():
 
 @pytest.fixture
 def client():
+    """Wraps TestClient.post so every existing call site across the suite
+    (written before CSRF protection existed) keeps working unchanged: any
+    POST that doesn't already specify a csrf_token gets the client's own
+    csrf_token cookie merged into its form data automatically. A test that
+    wants to exercise the CSRF check itself (missing/wrong token) still can
+    — passing an explicit csrf_token in `data` overrides this."""
     with TestClient(main_module.app) as c:
+        original_post = c.post
+
+        def post_with_csrf(url, data=None, **kwargs):
+            merged = dict(data or {})
+            if "csrf_token" not in merged:
+                token = c.cookies.get("csrf_token")
+                if token:
+                    merged["csrf_token"] = token
+            return original_post(url, data=merged, **kwargs)
+
+        c.post = post_with_csrf
         yield c
 
 

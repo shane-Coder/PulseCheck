@@ -7,6 +7,7 @@
   <h2>Edit monitor</h2>
   <p class="muted">Changing the schedule takes effect immediately — if your job checks in less often than the new interval, it may show as overdue right away.</p>
   <form method="post" action="/monitors/{{ monitor.id }}/edit" class="inline-form">
+    {{ csrf_field(request) }}
     <label>Name
       <input type="text" name="name" value="{{ monitor.name }}" required>
     </label>

@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
@@ -6,6 +7,16 @@ from passlib.context import CryptContext
 from app.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def generate_csrf_token() -> str:
+    """A fresh random value per login/register — not a JWT, doesn't need to
+    encode or verify anything on its own. Its only job is to be a secret an
+    attacker's page can't read (cross-origin cookie access is blocked by
+    the browser) or guess, so it can be compared against a copy the same
+    request must also submit as a form field. See the CSRF middleware in
+    main.py for the actual check."""
+    return secrets.token_urlsafe(32)
 
 
 def hash_password(password: str) -> str:

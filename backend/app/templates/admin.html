@@ -34,6 +34,7 @@
       <td>
         {% if not is_admin_email(u.email) %}
         <form method="post" action="/admin/users/{{ u.id }}/delete" style="display:inline" onsubmit="return confirm('Delete account ' + {{ u.email|tojson }} + ' and all its monitors? This can\'t be undone.');">
+          {{ csrf_field(request) }}
           <button class="link-button danger" type="submit">delete</button>
         </form>
         {% else %}

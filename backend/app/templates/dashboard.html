@@ -5,6 +5,7 @@
 <div class="verify-banner">
   <span>Verify your email so you don't miss an alert — we sent a link to <strong>{{ user.email }}</strong>.</span>
   <form method="post" action="/account/resend-verification">
+    {{ csrf_field(request) }}
     <button type="submit" class="link-button">Resend</button>
   </form>
 </div>
@@ -70,6 +71,7 @@
     <button type="button" class="template-btn" data-name="service-health" data-period="300" data-grace="60" title="Every 5m, 1m grace">Service health check</button>
   </div>
   <form method="post" action="/monitors" class="inline-form" id="new-monitor-form">
+    {{ csrf_field(request) }}
     <label>Name
       <input type="text" name="name" id="monitor-name" placeholder="nightly-backup" required>
     </label>
@@ -107,9 +109,11 @@
       <td class="mono">{{ m.period_seconds }}s (+{{ m.grace_seconds }}s grace)</td>
       <td>
         <form method="post" action="/monitors/{{ m.id }}/pause" style="display:inline">
+          {{ csrf_field(request) }}
           <button class="link-button" type="submit">{{ "resume" if m.status.value == "paused" else "pause" }}</button>
         </form>
         <form method="post" action="/monitors/{{ m.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this monitor?');">
+          {{ csrf_field(request) }}
           <button class="link-button danger" type="submit">delete</button>
         </form>
       </td>
