@@ -6,9 +6,10 @@ Your scheduled job pings a unique URL every time it finishes successfully. If a 
 show up within the expected window, PulseCheck assumes something broke and emails you —
 before you find out the hard way, days later.
 
-> **Status:** currently paused in production while I finish a UI rebuild and an architecture
-> change (see [Deployment](#deployment)) — cost-optimizing before the next relaunch, not
-> abandoned. Everything below runs fully locally via Docker in the meantime.
+> **Status:** the architecture change is done — the always-on Celery worker is gone, replaced
+> by a GitHub Actions cron (see [Stack](#stack)). The live demo URL currently serves a
+> maintenance page while I finish the UI rebuild; everything below runs fully locally via
+> Docker in the meantime.
 
 ## Why
 
@@ -46,7 +47,7 @@ of an error.
 - **Redis:** rate limiting only (`slowapi`) — it used to also be the Celery broker; that's gone
 - **Frontend:** server-rendered Jinja2 templates (no separate JS build), IBM Plex Sans/Mono
 - **Auth:** email + password, JWT stored in an HttpOnly cookie
-- **Alerts:** SMTP email (Slack/webhooks planned)
+- **Alerts:** SMTP email, plus Slack, Discord, and generic webhooks (each with a test send)
 
 ## Local development
 
